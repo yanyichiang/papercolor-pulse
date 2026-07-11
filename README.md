@@ -64,7 +64,7 @@ connection.
 Install ESP-IDF 5.5.x, then:
 
 ```bash
-git clone --recurse-submodules https://github.com/YOUR_GITHUB_USERNAME/papercolor-pulse.git
+git clone --recurse-submodules https://github.com/yanyichiang/papercolor-pulse.git
 cd papercolor-pulse
 . "$IDF_PATH/export.sh"
 idf.py set-target esp32s3
