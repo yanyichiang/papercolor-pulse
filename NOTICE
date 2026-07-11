@@ -1,0 +1,8 @@
+PaperColor Pulse
+
+Based on M5Stack M5PaperColor-UserDemo, Copyright (c) 2026 M5Stack Technology CO LTD.
+M5Unified and M5GFX are maintained by M5Stack and distributed under the MIT License.
+
+PaperColor Pulse additions include the low-power scheduled gateway client,
+deterministic Pulse renderer, Home Assistant integration, and optional
+Cloudflare MCP proxy. The upstream copyright and MIT license are retained.

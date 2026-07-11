@@ -1,0 +1,3312 @@
+<!--
+SPDX-FileCopyrightText: 2026 M5Stack Technology CO LTD
+
+SPDX-License-Identifier: MIT
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>PaperColor - Config Panel</title>
+  <style>
+    /* ========== Reset & Base ========== */
+    :root {
+      --page-max-width: 720px;
+      --page-padding: clamp(14px, 2.4vw, 28px);
+      --card-padding-y: clamp(18px, 2vw, 26px);
+      --card-padding-x: clamp(16px, 2.2vw, 28px);
+      --radius-card: 18px;
+      --title-size: clamp(1.25rem, 1.1rem + 0.7vw, 1.95rem);
+      --section-size: clamp(0.95rem, 0.9rem + 0.3vw, 1.15rem);
+      --body-size: clamp(0.94rem, 0.9rem + 0.2vw, 1.05rem);
+      --meta-size: clamp(0.78rem, 0.76rem + 0.15vw, 0.92rem);
+      --button-size: clamp(0.95rem, 0.92rem + 0.2vw, 1.05rem);
+      --header-height: 120px;
+      --status-height: 42px;
+      --bottom-bar-height: 76px;
+      --layout-gap: clamp(14px, 1.8vw, 22px);
+      --content-max-width: min(100%, var(--page-max-width));
+      --surface-shadow: 0 8px 28px rgba(51,44,43,0.08);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", sans-serif;
+      background: #f8f6f4;
+      color: #332C2B;
+      line-height: 1.5;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      font-size: var(--body-size);
+    }
+
+    /* ========== Layout Shell ========== */
+    #app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page-shell {
+      width: 100%;
+      max-width: var(--content-max-width);
+      margin: 0 auto;
+    }
+
+    .page-shell.page-shell-fill {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+    }
+
+    .page-shell > .page-title {
+      margin-bottom: 0;
+    }
+
+    .wifi-layout,
+    .mode-layout {
+      display: flex;
+      flex-direction: column;
+      gap: var(--layout-gap);
+    }
+
+    .landing-layout,
+    .wifi-layout,
+    .mode-page-layout {
+      flex: 1 1 auto;
+    }
+
+    .mode-column {
+      display: flex;
+      flex-direction: column;
+      gap: var(--layout-gap);
+    }
+
+    /* ========== Header / Logo ========== */
+    .app-header {
+      background: #fff;
+      padding: clamp(10px, 1.5vw, 18px) 20px;
+      text-align: center;
+      border-bottom: 1px solid #ebe7e3;
+    }
+    .logo-paper {
+      font-size: clamp(1.2rem, 1rem + 0.7vw, 1.9rem);
+      font-weight: 700;
+      color: #332C2B;
+      letter-spacing: clamp(2px, 0.3vw, 4px);
+      line-height: 1.1;
+      font-family: 'Arial', 'Helvetica', sans-serif;
+    }
+    .logo-color {
+      font-size: clamp(1.6rem, 1.2rem + 1.1vw, 2.5rem);
+      font-weight: 900;
+      letter-spacing: clamp(2px, 0.3vw, 4px);
+      line-height: 1;
+      font-family: 'Arial Black', 'Impact', sans-serif;
+    }
+    .logo-color span { display: inline-block; }
+    .c1 { color: #FF0066; }
+    .c2 { color: #FFCC00; }
+    .c3 { color: #006633; }
+    .c4 { color: #336699; }
+    .c5 { color: #990099; }
+
+    /* ========== Status Bar ========== */
+    #status-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 10px clamp(16px, 2vw, 24px); background: #fff; border-bottom: 1px solid #ebe7e3;
+      font-size: var(--meta-size); color: #888;
+    }
+    #status-bar .wifi-indicator { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    #status-bar .wifi-indicator.hidden { display: flex !important; }
+    #status-bar .wifi-indicator.is-hidden { display: none !important; }
+    #status-bar #wifi-status-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #status-bar .wifi-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: #ccc;
+      transition: background 0.3s;
+    }
+    #status-bar .wifi-dot.connected { background: #006633; }
+    #status-bar .wifi-dot.connecting { background: #FFCC00; animation: pulse 1.2s ease-in-out infinite; }
+    #status-bar .status-right {
+      display: flex; align-items: center; gap: 12px; flex-shrink: 0; margin-left: auto;
+    }
+    #status-bar .mode-badge {
+      font-size: var(--meta-size); background: linear-gradient(135deg, #f0e6f6, #fce4ec);
+      color: #990099; padding: 4px 12px; border-radius: 999px; flex-shrink: 0;
+    }
+    @keyframes pulse { from { opacity: 1; } 50% { opacity: 0.3; } to { opacity: 1; } }
+
+    /* ========== Battery Icon ========== */
+    .battery-wrap {
+      display: flex; align-items: center; gap: 5px; flex-shrink: 0;
+    }
+    .battery-icon {
+      position: relative; width: 26px; height: 13px;
+      border: 1.5px solid #888; border-radius: 2px; flex-shrink: 0;
+    }
+    .battery-icon::after {
+      content: ''; position: absolute; right: -3.5px; top: 50%; transform: translateY(-50%);
+      width: 2.5px; height: 5px; background: #888; border-radius: 0 1px 1px 0;
+    }
+    .battery-fill {
+      position: absolute; left: 1px; top: 1px; bottom: 1px;
+      background: #006633; border-radius: 1px; transition: width 0.4s;
+      max-width: calc(100% - 2px);
+    }
+    .battery-fill.low { background: #f39c12; }
+    .battery-fill.crit { background: #e74c3c; animation: pulse 1s ease-in-out infinite; }
+    .battery-percent {
+      font-size: 12px; color: #888; min-width: 32px; text-align: right;
+    }
+
+    /* ========== Copyright Footer ========== */
+    .copyright-bar {
+      text-align: center; padding: 20px 16px 12px; font-size: 11px; color: #bbb;
+      margin-top: auto;
+    }
+
+    /* ========== Page Containers ========== */
+    .page { display: none; padding: var(--page-padding); padding-bottom: calc(var(--bottom-bar-height) + 16px); }
+    .page.active { display: flex; flex: 1 1 auto; flex-direction: column; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ========== Card ========== */
+    .card {
+      background: #fff; border-radius: var(--radius-card); padding: var(--card-padding-y) var(--card-padding-x);
+      margin-bottom: 14px; box-shadow: var(--surface-shadow);
+      border: 1px solid #f0ece8;
+    }
+
+    /* ========== Typography ========== */
+    .page-title { font-size: var(--title-size); font-weight: 700; margin-bottom: 16px; color: #332C2B; }
+    .section-title { font-size: var(--section-size); font-weight: 600; margin-bottom: 12px; color: #332C2B; }
+
+    /* ========== Buttons ========== */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      min-height: 44px; padding: 10px 20px; border: none; border-radius: 10px;
+      font-size: var(--button-size); font-weight: 500; cursor: pointer;
+      transition: all 0.2s; user-select: none; -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent; outline: none !important;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:focus { outline: none !important; }
+    .btn:focus-visible { outline: 2px solid #336699; outline-offset: 2px; }
+    .btn svg, .btn img, .btn span { pointer-events: none; }
+    .btn-primary {
+      background: linear-gradient(135deg, #332C2B, #4a3f3d);
+      color: #fff;
+    }
+    @media (hover: hover) { .btn-primary:hover { opacity: 0.92; } }
+    .btn-success {
+      background: linear-gradient(135deg, #006633, #008855);
+      color: #fff;
+    }
+    @media (hover: hover) { .btn-success:hover { opacity: 0.92; } }
+    .btn-outline {
+      background: #fff; color: #332C2B;
+      border: 1.5px solid #d0cdc9;
+    }
+    @media (hover: hover) { .btn-outline:hover { border-color: #332C2B; } }
+    .btn-outline.selected {
+      border-color: #006633; color: #006633; background: #eaf7ef;
+    }
+    .btn-danger { background: #e74c3c; color: #fff; }
+    @media (hover: hover) { .btn-danger:hover { background: #c0392b; } }
+    .btn-danger-outline { background: #fff; color: #e74c3c; border: 1.5px solid #e74c3c; }
+    @media (hover: hover) { .btn-danger-outline:hover { background: #fff5f5; } }
+    .btn.dimmed { background: #e8e8e8; color: #aaa; cursor: default; pointer-events: none; }
+
+    /* ========== Settings Sections ========== */
+    .settings-section {
+      margin-bottom: 18px; padding-bottom: 16px;
+      border-bottom: 1px solid #f0ece8;
+    }
+    .settings-section:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .btn-sm { min-height: 38px; padding: 8px 14px; font-size: var(--meta-size); }
+    .btn-block { display: flex; width: 100%; }
+    .btn:disabled { opacity: 0.5; pointer-events: none; }
+
+    /* ========== Form Elements ========== */
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: var(--meta-size); font-weight: 500; margin-bottom: 8px; color: #665; }
+    .form-input {
+      width: 100%; height: 48px; padding: 0 14px;
+      border: 1.5px solid #d0cdc9; border-radius: 10px;
+      font-size: var(--button-size); color: #332C2B; background: #faf9f8;
+      transition: border-color 0.2s; outline: none;
+    }
+    .form-input:focus { border-color: #336699; background: #fff; }
+    .input-with-icon { position: relative; }
+    .input-with-icon .form-input { padding-right: 44px; }
+    .input-icon-btn {
+      position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+      width: 36px; height: 36px; border: none; background: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 18px; color: #999; border-radius: 6px;
+    }
+    @media (hover: hover) { .input-icon-btn:hover { color: #2c3e50; background: #f0f0f0; } }
+    .ssid-select {
+      position: relative; display: flex; align-items: stretch;
+      border: 1.5px solid #d0cdc9; border-radius: 10px; background: #faf9f8;
+      transition: border-color 0.2s, background 0.2s; overflow: hidden;
+    }
+    .ssid-select:focus-within { border-color: #336699; background: #fff; }
+    .ssid-select-input {
+      flex: 1; min-width: 0; height: 48px; padding: 0 14px;
+      border: none; font-size: var(--button-size); color: #332C2B; background: transparent;
+      outline: none;
+    }
+    .ssid-select-input::placeholder { color: #908884; }
+    .ssid-scan-btn {
+      width: 48px; min-width: 48px; border: none; border-left: 1px solid #dedbd7;
+      background: transparent; color: #7a7470; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, color 0.2s;
+    }
+    @media (hover: hover) { .ssid-scan-btn:hover { background: #f2f5f8; color: #2c3e50; } }
+    .ssid-scan-btn:focus-visible { outline: none; background: #eef4f8; color: #2c3e50; }
+    .ssid-scan-btn:disabled { cursor: wait; opacity: 0.85; }
+    .ssid-select.open .ssid-scan-btn { background: #eef4f8; }
+    .ssid-select-caret {
+      flex-shrink: 0; font-size: 24px; font-weight: 600; line-height: 1;
+      transition: transform 0.2s ease;
+    }
+    .ssid-select.open .ssid-select-caret { transform: rotate(180deg); }
+    .ssid-dropdown {
+      margin-top: 12px; border: 1px solid #e3e6ea; border-radius: 12px;
+      background: #fff; overflow: hidden;
+      max-height: min(320px, 52vh);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+    .ssid-loading {
+      padding: 14px; font-size: 14px; color: #6f6965;
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    /* ========== WiFi Signal Icon ========== */
+    .signal-icon {
+      display: inline-flex; align-items: flex-end; gap: 2px;
+      width: 20px; height: 18px; flex-shrink: 0;
+    }
+    .signal-icon .bar {
+      flex: 1; border-radius: 1px; background: #d0cdc9;
+      transition: background 0.2s;
+    }
+    .signal-icon .bar:nth-child(1) { height: 25%; }
+    .signal-icon .bar:nth-child(2) { height: 50%; }
+    .signal-icon .bar:nth-child(3) { height: 75%; }
+    .signal-icon .bar:nth-child(4) { height: 100%; }
+    .signal-icon.s0 .bar { background: #d0cdc9; }
+    .signal-icon.s1 .bar:nth-child(1) { background: #e74c3c; }
+    .signal-icon.s2 .bar:nth-child(1), .signal-icon.s2 .bar:nth-child(2) { background: #f39c12; }
+    .signal-icon.s3 .bar:nth-child(1), .signal-icon.s3 .bar:nth-child(2),
+    .signal-icon.s3 .bar:nth-child(3) { background: #336699; }
+    .signal-icon.s4 .bar { background: #006633; }
+
+    /* ========== WiFi Network List ========== */
+    .network-list { max-height: 220px; overflow-y: auto; }
+    .network-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px; border-radius: 8px; cursor: pointer;
+      transition: background 0.15s; border: 1px solid transparent;
+    }
+    @media (hover: hover) { .network-item:hover { background: #f4f8fb; border-color: #c8dae8; } }
+    .network-item:active { background: #f4f8fb; border-color: #c8dae8; }
+    .network-item .net-info { display: flex; align-items: center; gap: 10px; }
+    .network-item .net-ssid { font-size: 15px; font-weight: 500; }
+    .network-item .net-lock { font-size: 13px; color: #999; }
+
+    /* ========== Mode Selector ========== */
+    .mode-select-wrap {
+      position: relative;
+    }
+    .mode-select-trigger {
+      width: 100%;
+      min-height: 48px;
+      padding: 12px 42px 12px 14px;
+      border: 1.5px solid #d0cdc9;
+      border-radius: 10px;
+      background: #faf9f8;
+      color: #332C2B;
+      font-size: var(--button-size);
+      line-height: 1.4;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+    }
+    @media (hover: hover) {
+      .mode-select-trigger:hover {
+        background: #fff;
+        border-color: #b9c3cc;
+      }
+    }
+    .mode-select-wrap.open .mode-select-trigger,
+    .mode-select-trigger:focus-visible {
+      border-color: #336699;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(51, 102, 153, 0.08);
+      outline: none;
+    }
+    .mode-select-trigger.placeholder {
+      color: #908884;
+    }
+    .mode-select-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      border: 1px solid #e3e6ea;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 16px 28px rgba(51,44,43,0.12);
+      overflow: hidden;
+      z-index: 30;
+    }
+    .mode-select-option {
+      width: 100%;
+      padding: 12px 14px;
+      border: none;
+      border-top: 1px solid #f0ece8;
+      background: #fff;
+      color: #332C2B;
+      font-size: var(--button-size);
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .mode-select-option:first-child {
+      border-top: none;
+    }
+    .mode-select-option:focus-visible {
+      background: #f4f8fb;
+      color: #2c3e50;
+      outline: none;
+    }
+    @media (hover: hover) {
+      .mode-select-option:hover {
+        background: #f4f8fb;
+      }
+    }
+    .mode-select-option.selected {
+      background: #eef4f8;
+      color: #2c3e50;
+      font-weight: 600;
+    }
+    .mode-select-caret {
+      position: absolute;
+      top: 50%;
+      right: 14px;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #7a7470;
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 1;
+      pointer-events: none;
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
+    .mode-select-wrap.open .mode-select-caret,
+    .mode-select-trigger:focus-visible + .mode-select-caret {
+      color: #2c3e50;
+    }
+    @media (hover: hover) {
+      .mode-select-wrap:hover .mode-select-caret {
+        color: #2c3e50;
+      }
+    }
+    .mode-select-wrap.open .mode-select-caret {
+      transform: translateY(-50%) rotate(180deg);
+    }
+
+    /* ========== Upload Area (merged into preview) ========== */
+
+    /* ========== Preview Editor ========== */
+.device-preview-shell {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+.device-frame {
+  --device-width: 101.3;
+  --device-height: 68.3;
+  --frame-top: 5.95;
+  --frame-right: 5.95;
+  --frame-bottom: 10.75;
+  --frame-left: 10.75;
+  --device-border-radius: 2;
+  --device-bezel-width: 1.15;
+  --shell-display-width: min(100%, 760px);
+  position: relative;
+  width: min(100%, var(--shell-display-width));
+  max-width: 100%;
+  aspect-ratio: calc(var(--device-width) / var(--device-height));
+  border-radius: clamp(10px, min(calc(var(--device-border-radius) / var(--device-width) * 100%), calc(var(--device-border-radius) / var(--device-height) * 100%)), 16px);
+  border: 1px solid #f7f7f4;
+  background: #f5f6f7;
+  box-shadow: none;
+  overflow: hidden;
+  transition: width 0.25s ease, aspect-ratio 0.25s ease;
+}
+.device-frame::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: inherit;
+  border: 1px solid #bfc3c8;
+  pointer-events: none;
+}
+.device-frame::after {
+  content: none;
+}
+.preview-container {
+  position: absolute;
+  top: calc(var(--frame-top) / var(--device-height) * 100%);
+  right: calc(var(--frame-right) / var(--device-width) * 100%);
+  bottom: calc(var(--frame-bottom) / var(--device-height) * 100%);
+  left: calc(var(--frame-left) / var(--device-width) * 100%);
+  width: auto;
+  height: auto;
+  margin: 0;
+  background: #eef1f4;
+  border-radius: 0;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  border: 1px solid #d7dbe0;
+  transition: border-color 0.2s, background 0.2s;
+}
+.preview-render-surface {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.preview-ink-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 20;
+  transition: opacity 0.2s;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+.preview-container.has-image.preview-ink-visible .preview-ink-canvas {
+  opacity: 1;
+}
+@media (hover: hover) {
+.preview-container:hover { border-color: #c5cad0; background: #eef1f4; }
+.preview-container.has-image:hover { background: #eef1f4; }
+}
+.preview-container.has-image { background: #eef1f4; border-color: #d7dbe0; cursor: grab; }
+.preview-container.has-image:active { cursor: grabbing; }
+.preview-composition {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: auto;
+}
+.preview-layer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center center;
+  touch-action: none;
+}
+.preview-layer img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.preview-layer.selected {
+  outline: 2px solid rgba(51, 102, 153, 0.55);
+  outline-offset: 2px;
+}
+.layer-remove-btn {
+  position: absolute;
+  top: -12px;
+  left: -12px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(51, 44, 43, 0.88);
+  color: #fff;
+  font-size: 15px;
+  line-height: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 30;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+}
+.layer-remove-floating {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(51, 44, 43, 0.88);
+  color: #fff;
+  font-size: 15px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 40;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+}
+.preview-layer.selected .layer-remove-btn {
+  display: none;
+}
+.preview-placeholder {
+  position: absolute; inset: 0; display: flex;
+  flex-direction: column; align-items: center; justify-content: center;
+  color: #999; font-size: 14px; pointer-events: none;
+}
+.preview-placeholder .ph-icon { font-size: 36px; color: #336699; margin-bottom: 6px; }
+.preview-placeholder .ph-text { font-size: 14px; color: #888; }
+.preview-placeholder .ph-hint { font-size: 12px; color: #aaa; margin-top: 4px; }
+
+/* ========== Re-upload Button (overlay on preview) ========== */
+.reupload-btn {
+  position: absolute; top: 8px; right: 8px;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255,255,255,0.85); border: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; color: #332C2B; cursor: pointer;
+  z-index: 30; transition: all 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+@media (hover: hover) { .reupload-btn:hover { background: #fff; transform: scale(1.1); } }
+
+/* ========== Editor Controls ========== */
+.editor-controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
+.editor-controls .btn { min-width: 52px; }
+.display-mode-wrap { position: relative; min-width: 110px; }
+.display-mode-trigger {
+  width: 100%; min-height: 44px; padding: 10px 34px 10px 14px;
+  border: 1.5px solid #d0cdc9; border-radius: 10px;
+  background: #fff; color: #332C2B; font-size: var(--button-size); font-weight: 500;
+  text-align: left; cursor: pointer; display: flex; align-items: center; gap: 6px;
+  transition: border-color 0.2s; -webkit-tap-highlight-color: transparent; outline: none !important;
+}
+.display-mode-trigger:focus { outline: none !important; }
+.display-mode-caret {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  font-size: 14px; color: #7a7470; pointer-events: none; transition: transform 0.2s;
+}
+.display-mode-wrap.open .display-mode-caret { transform: translateY(-50%) rotate(180deg); }
+.display-mode-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  border: 1px solid #e3e6ea; border-radius: 10px; background: #fff;
+  box-shadow: 0 12px 24px rgba(51,44,43,0.10); overflow: hidden; z-index: 30;
+}
+.display-mode-option {
+  padding: 10px 14px; font-size: var(--button-size); font-weight: 500;
+  color: #332C2B; cursor: pointer; transition: background 0.15s;
+}
+@media (hover: hover) { .display-mode-option:hover { background: #f4f8fb; } }
+.display-mode-option.selected { color: #006633; background: #eaf7ef; font-weight: 600; }
+.display-mode-option + .display-mode-option { border-top: 1px solid #f0ece8; }
+
+/* ========== Upload Actions ========== */
+.upload-actions { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+.upload-actions .btn { flex: 1 1 220px; }
+
+/* ========== Photo Grid ========== */
+.photo-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.photo-card {
+  background: #fff; border-radius: 12px; overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  min-width: 0;
+}
+.photo-card .thumb {
+  width: 100%; aspect-ratio: 1; object-fit: contain;
+  background: #f0f0f0; display: block;
+}
+.photo-card .photo-info {
+  padding: 8px 10px;
+}
+.photo-card .photo-name {
+  font-size: var(--meta-size); color: #555; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.photo-card .photo-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 0 10px 10px;
+}
+.photo-card .photo-actions .btn {
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  padding: 6px 8px;
+  font-size: var(--meta-size);
+}
+
+/* ========== Toast ========== */
+#toast {
+  position: fixed; top: 16px; left: 50%; transform: translateX(-50%) translateY(-120px);
+  background: #332C2B; color: #fff; padding: 12px 24px;
+  border-radius: 8px; font-size: 14px; z-index: 9999;
+  transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: none; white-space: nowrap; max-width: 90vw;
+  overflow: hidden; text-overflow: ellipsis;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+#toast.success { background: #006633; }
+#toast.error { background: #e74c3c; }
+.toast-spinner {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff; border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-right: 8px; vertical-align: middle;
+}
+
+/* ========== Modal ========== */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: flex; align-items: flex-end; justify-content: center;
+  z-index: 1000; animation: fadeIn 0.2s ease;
+}
+.modal-sheet {
+  background: #fff; border-radius: 20px 20px 0 0;
+  width: 100%; max-width: 640px; max-height: 90vh;
+  display: flex; flex-direction: column;
+  padding: 28px 24px 0;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-title { font-size: var(--title-size); font-weight: 600; margin-bottom: 20px; text-align: center; }
+
+.modal-body { overflow-y: auto; flex: 1 1 auto; padding-bottom: 4px; }
+.modal-footer {
+  display: flex; gap: 10px; flex-shrink: 0;
+  padding: 16px 0 28px;
+  border-top: 1px solid #f0ece8; margin-top: 16px;
+}
+
+/* ========== Confirm Dialog ========== */
+.confirm-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1001; animation: fadeIn 0.2s ease;
+}
+.confirm-box {
+  background: #fff; border-radius: 18px; padding: 28px 24px;
+  width: min(320px, calc(100vw - 32px)); text-align: center;
+}
+.confirm-box .confirm-msg {
+  font-family: inherit;
+  font-size: var(--body-size);
+  line-height: 1.5;
+  margin-bottom: 20px;
+  color: #000;
+}
+.confirm-box .confirm-actions { display: flex; gap: 12px; }
+
+/* ========== Bottom Bar ========== */
+.bottom-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  padding: 12px 16px; padding-bottom: max(12px, env(safe-area-inset-bottom));
+  background: rgba(255,255,255,0.94); border-top: 1px solid #ebe7e3;
+  backdrop-filter: blur(10px);
+  display: flex; justify-content: center; gap: 12px; z-index: 100;
+}
+.bottom-bar .btn { flex: 0 1 240px; }
+
+/* ========== Connection Status ========== */
+.connection-status {
+  display: flex; align-items: center; gap: 8px; padding: 10px 0;
+  font-size: 14px; color: #888;
+}
+.connection-status .spinner {
+  width: 16px; height: 16px; border: 2px solid #e0e0e0;
+  border-top-color: #006633; border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.connection-status.success { color: #006633; }
+.connection-status.error { color: #e74c3c; }
+
+.wifi-layout > .card,
+.mode-column > .card {
+  margin-bottom: 0;
+}
+
+.wifi-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-gap);
+}
+
+.mode-main-card {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 1.8vw, 22px);
+}
+
+.mode-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mode-main-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-gap);
+}
+
+.mode-main-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--layout-gap);
+}
+
+.status-inline {
+  font-size: var(--meta-size);
+  font-weight: 400;
+  color: #999;
+}
+
+.settings-label {
+  color: #333;
+  margin-right: 2px;
+}
+
+.empty-photos {
+  color: #999;
+  font-size: var(--body-size);
+  text-align: center;
+  grid-column: 1 / -1;
+  padding: 20px;
+}
+
+.inline-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inline-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+/* ========== Responsive (wider screens) ========== */
+@media (max-width: 380px) {
+  .logo-paper { font-size: 18px; letter-spacing: 2px; }
+  .logo-color { font-size: 22px; letter-spacing: 2px; }
+  .upload-actions .btn,
+  .bottom-bar .btn {
+    flex-basis: 100%;
+  }
+  #status-bar {
+    flex-wrap: wrap;
+  }
+}
+@media (min-width: 640px) {
+  :root {
+    --page-max-width: 860px;
+  }
+  .photo-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (min-width: 900px) {
+  :root {
+    --page-max-width: 1040px;
+    --content-max-width: min(100%, 980px);
+    --bottom-bar-height: 86px;
+    --card-padding-y: clamp(22px, 2vw, 30px);
+    --card-padding-x: clamp(22px, 2.4vw, 34px);
+    --title-size: clamp(1.45rem, 1.18rem + 0.85vw, 2.2rem);
+    --section-size: clamp(1.05rem, 0.96rem + 0.35vw, 1.28rem);
+    --body-size: clamp(1rem, 0.96rem + 0.18vw, 1.12rem);
+    --meta-size: clamp(0.88rem, 0.84rem + 0.12vw, 1rem);
+    --button-size: clamp(1rem, 0.96rem + 0.18vw, 1.12rem);
+    --layout-gap: clamp(18px, 1.6vw, 24px);
+  }
+  #status-bar {
+    padding-inline: max(24px, calc((100vw - var(--content-max-width)) / 2 + 24px));
+  }
+  .page {
+    padding-top: clamp(20px, 2vw, 28px);
+  }
+  .bottom-bar {
+    left: 50%;
+    right: auto;
+    width: min(calc(100% - 32px), calc(var(--content-max-width) + var(--page-padding) * 2));
+    transform: translateX(-50%);
+    padding-inline: 20px;
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -6px 24px rgba(51,44,43,0.08);
+  }
+  .bottom-bar .btn {
+    flex-basis: 220px;
+  }
+  .mode-main-card {
+    gap: 20px;
+  }
+  .mode-main-side {
+    justify-content: stretch;
+  }
+  .mode-main-side > div {
+    min-width: 0;
+  }
+  .photo-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .photo-card .photo-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1200px) {
+  :root {
+    --content-max-width: min(100%, 1120px);
+  }
+  .mode-main-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+    align-items: start;
+    gap: 22px;
+  }
+  .mode-main-side {
+    min-width: 0;
+  }
+  .mode-main-side > div {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .mode-main-side:first-child > div {
+    padding-right: 8px;
+  }
+  .mode-main-side:last-child > div {
+    min-height: 100%;
+    padding-top: 4px;
+  }
+  .mode-main-side:last-child .section-title {
+    margin-bottom: 10px;
+  }
+  .mode-main-side:last-child .storage-bar-wrap {
+    margin-bottom: 10px !important;
+  }
+  .mode-main-side:last-child .storage-text {
+    margin-bottom: 10px !important;
+  }
+  .mode-main-side:last-child .photo-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-content: start;
+    gap: 12px;
+  }
+  .mode-main-side:last-child .pagination {
+    margin-top: 18px;
+  }
+  .editor-controls {
+    margin-top: 16px;
+  }
+  .upload-actions {
+    margin-top: 18px;
+  }
+}
+@media (min-width: 1440px) {
+  :root {
+    --content-max-width: min(100%, 1180px);
+  }
+  .mode-main-layout {
+    grid-template-columns: minmax(0, 1.02fr) minmax(360px, 0.98fr);
+    gap: 24px;
+  }
+  .mode-main-side:first-child > div {
+    padding-right: 10px;
+  }
+  .mode-main-side:last-child > div {
+    padding-top: 6px;
+  }
+  .mode-main-side:last-child .photo-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+
+/* ========== Toggle Switch ========== */
+.toggle-wrap { display: flex; align-items: center; gap: 10px; }
+.toggle {
+  position: relative; width: 48px; height: 28px; flex-shrink: 0;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle .slider {
+  position: absolute; inset: 0; background: #d0cdc9; border-radius: 14px;
+  cursor: pointer; transition: background 0.25s;
+}
+.toggle .slider::before {
+  content: ''; position: absolute; left: 3px; top: 3px;
+  width: 22px; height: 22px; background: #fff; border-radius: 50%;
+  transition: transform 0.25s;
+}
+.toggle input:checked + .slider { background: #006633; }
+.toggle input:checked + .slider::before { transform: translateX(20px); }
+
+/* ========== Segmented Control ========== */
+.segmented {
+  display: flex; border-radius: 8px; overflow: hidden;
+  border: 1.5px solid #d0cdc9;
+}
+.segmented button {
+  flex: 1 1 0; min-height: 52px; border: none; background: #fff;
+  font-size: 14px; font-weight: 500; color: #888; cursor: pointer;
+  transition: all 0.2s; border-right: 1px solid #d0cdc9;
+  padding: 8px 10px;
+  white-space: normal;
+  line-height: 1.3;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.segmented button .seg-title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.segmented button .seg-meta {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  opacity: 0.82;
+}
+.segmented button:last-child { border-right: none; }
+.segmented button.active { background: #006633; color: #fff; }
+
+/* ========== Pagination ========== */
+.pagination {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; margin-top: 14px;
+}
+.pagination .pg-info {
+  min-width: 80px; text-align: center;
+}
+
+/* ========== Storage Bar ========== */
+.storage-bar-wrap {
+  background: #e8e8e8; border-radius: 4px; height: 8px; margin-top: 6px; overflow: hidden;
+}
+.storage-bar-fill {
+  height: 100%; border-radius: 4px; background: linear-gradient(90deg, #006633, #008855); transition: width 0.4s;
+}
+.storage-bar-fill.warning { background: linear-gradient(90deg, #FFCC00, #e6b800); }
+.storage-bar-fill.danger { background: linear-gradient(90deg, #FF0066, #e74c3c); }
+.storage-text {
+  display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-top: 4px;
+}
+
+/* ========== Landing Page ========== */
+.landing-layout {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.landing-layout > .page-title {
+  font-size: clamp(1.8rem, 1.6rem + 1vw, 2.4rem);
+  letter-spacing: 3px; margin-bottom: 6px; color: #332C2B;
+}
+.landing-subtitle {
+  text-align: center; font-size: clamp(1rem, 0.9rem + 0.35vw, 1.15rem); color: #888; margin-bottom: 8px;
+}
+.mode-cards {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--layout-gap); width: 100%; max-width: 760px; margin-top: 16px;
+}
+.mode-card {
+  cursor: pointer; transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease, background 0.22s ease;
+  min-height: 290px; padding: 20px 18px 18px;
+  display: grid; grid-template-rows: auto auto auto auto; align-items: start;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(229, 224, 217, 0.95);
+  box-shadow: 0 10px 24px rgba(51,44,43,0.06), 0 2px 6px rgba(51,44,43,0.03), inset 0 1px 0 rgba(255,255,255,0.7);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(250,248,245,0.98) 100%),
+    linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 42%);
+  background-clip: padding-box;
+}
+.mode-card::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,0.42), rgba(255,255,255,0) 28%);
+}
+@media (hover: hover) {
+.mode-card:hover {
+  transform: translateY(-3px); box-shadow: 0 16px 34px rgba(51,44,43,0.10), 0 5px 14px rgba(51,44,43,0.04), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+}
+.mode-card:active { transform: scale(0.99); }
+.mode-card-hero {
+  display: contents;
+}
+.mode-card-label {
+  font-size: 28px;
+  font-weight: 700; letter-spacing: 0.03em; color: #332C2B; line-height: 1;
+  text-align: center;
+  margin-top: 6px;
+}
+.mode-card-arrow {
+  width: 32px; height: 32px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  margin: 10px auto 10px;
+  color: #2f2928; font-size: 30px; font-weight: 900; line-height: 1;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.45);
+}
+.mode-card-body {
+  align-self: start;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  text-align: center; gap: 8px;
+  width: 100%;
+  margin-top: 0;
+}
+.mode-card-main {
+  font-size: clamp(15px, 1vw + 11px, 20px);
+  font-weight: 500; letter-spacing: 0.01em; color: #332C2B; line-height: 1.14;
+}
+.mode-card-sub {
+  font-size: clamp(15px, 0.85vw + 11px, 18px);
+  color: #332C2B; line-height: 1.18; font-weight: 500;
+}
+.mode-card-caption {
+  align-self: end;
+  width: 100%;
+  text-align: center;
+  font-size: clamp(11px, 0.45vw + 10px, 12px);
+  line-height: 1.25;
+  color: #7b7674;
+  padding-top: 16px;
+  margin-top: 0;
+}
+@media (hover: hover) {
+.mode-card.ap:hover {
+  border-color: rgba(214, 205, 194, 0.98);
+}
+.mode-card.internet:hover {
+  border-color: rgba(214, 205, 194, 0.98);
+}
+}
+@media (max-width: 640px) {
+  :root {
+    --layout-gap: 10px;
+  }
+  .mode-cards {
+    gap: 10px;
+  }
+  .mode-card {
+    min-height: 220px;
+    padding: 14px 10px 10px;
+  }
+  .mode-card-label {
+    font-size: 18px;
+    margin-top: 4px;
+  }
+  .mode-card-arrow {
+    font-size: 24px;
+    width: 26px;
+    height: 26px;
+    margin: 8px auto 8px;
+  }
+  .mode-card-body {
+    gap: 5px;
+  }
+  .mode-card-main {
+    font-size: clamp(13px, 3.6vw, 15px);
+    line-height: 1.14;
+  }
+  .mode-card-sub {
+    font-size: clamp(13px, 3.4vw, 15px);
+    line-height: 1.16;
+  }
+  .mode-card-caption {
+    font-size: 10px;
+    line-height: 1.2;
+    padding-top: 12px;
+  }
+}
+
+
+/* ========== Hidden Utility ========== */
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Header / Logo -->
+  <div class="app-header">
+    <div class="logo-paper">PAPER</div>
+    <div class="logo-color">
+      <span class="c1">C</span><span class="c2">O</span><span class="c3">L</span><span class="c4">O</span><span class="c5">R</span>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div id="status-bar">
+    <div class="wifi-indicator hidden">
+      <span class="wifi-dot" id="wifi-dot"></span>
+      <span id="wifi-status-text"></span>
+    </div>
+    <div class="status-right">
+      <div class="battery-wrap" id="battery-wrap">
+        <span class="battery-percent" id="battery-percent">--%</span>
+        <span class="battery-icon">
+          <span class="battery-fill" id="battery-fill" style="width:0%;"></span>
+        </span>
+      </div>
+      <span class="mode-badge hidden" id="mode-badge"></span>
+    </div>
+  </div>
+
+  <!-- ===== WiFi Configuration Page ===== -->
+  <div id="wifi-page" class="page">
+    <div class="page-shell page-shell-fill wifi-layout">
+
+      <div class="wifi-stack">
+        <div class="card">
+          <div class="form-group">
+            <label class="form-label">SSID</label>
+            <div class="ssid-select" id="ssid-select">
+              <input type="text" class="ssid-select-input" id="ssid-input" placeholder="Wi-Fi name" autocomplete="off">
+              <button type="button" class="ssid-scan-btn" id="ssid-scan-btn" onclick="scanNetworks()" aria-label="Scan Wi-Fi networks" title="Scan Wi-Fi networks">
+                <span class="ssid-select-caret">▾</span>
+              </button>
+            </div>
+            <div class="ssid-dropdown hidden" id="network-list"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <div class="input-with-icon">
+              <input type="password" class="form-input" id="pwd-input" placeholder="Wi-Fi password">
+              <button class="input-icon-btn" id="toggle-pwd" onclick="togglePassword()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
+            </div>
+          </div>
+
+          <div class="form-group" id="wifi-mode-group">
+            <label class="form-label" for="wifi-mode-trigger">Select Mode</label>
+            <div class="mode-select-wrap" id="wifi-mode-select-wrap">
+              <button type="button" class="mode-select-trigger placeholder" id="wifi-mode-trigger" onclick="toggleWifiModeDropdown()" aria-haspopup="listbox" aria-expanded="false"></button>
+              <span class="mode-select-caret">▾</span>
+              <div class="mode-select-menu hidden" id="wifi-mode-menu" role="listbox"></div>
+            </div>
+          </div>
+
+          <div class="form-group hidden" id="wifi-mode-locked">
+            <label class="form-label">Mode</label>
+            <div class="mode-locked-display"><span id="wifi-mode-locked-text"></span></div>
+          </div>
+
+          <div class="form-group hidden">
+            <label class="form-label">Device Name</label>
+            <input type="text" class="form-input" id="device-name-input" placeholder="papercolor" maxlength="63" autocomplete="off" spellcheck="false">
+          </div>
+
+          <div class="form-group hidden">
+            <label class="form-label">Boot sound</label>
+            <div class="toggle-wrap">
+              <label class="toggle">
+                <input type="checkbox" id="wifi-page-boot-sound-toggle" onchange="saveSetupConfig()">
+                <span class="slider"></span>
+              </label>
+              <span style="font-size:14px;font-weight:500;">Enable boot sound</span>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-block" id="confirm-btn" onclick="connectWiFi()">
+            Confirm
+          </button>
+
+          <div class="connection-status hidden" id="conn-status"></div>
+        </div>
+      </div>
+      <div class="copyright-bar">Copyright &copy;2026 M5Stack</div>
+    </div>
+  </div>
+
+  <!-- ===== Mode Configuration Page ===== -->
+  <div id="mode-page" class="page active">
+    <div class="page-shell page-shell-fill mode-page-layout">
+      <div class="mode-config mode-layout" data-mode="mode_1" id="mode-1-config">
+        <div class="card mode-main-card">
+          <div class="mode-topbar">
+            <h1 class="page-title">Photo Slideshow</h1>
+          </div>
+
+          <div class="mode-main-layout">
+            <div class="mode-main-side">
+              <div>
+                <div class="section-title">Preview &amp; Edit <span class="status-inline" id="orientation-label">600&times;400</span></div>
+                <div class="device-preview-shell">
+                  <div class="device-frame" id="device-frame">
+                    <div class="preview-container" id="preview-container">
+                      <div class="preview-placeholder" id="preview-placeholder">
+                        <span class="ph-icon">+</span>
+                        <span class="ph-text">Click or drag to upload</span>
+                        <span class="ph-hint">Supports JPG, PNG, BMP, WebP</span>
+                      </div>
+                      <div class="preview-render-surface" id="preview-render-surface">
+                        <div class="preview-composition" id="preview-composition"></div>
+                        <canvas id="preview-ink-canvas" class="preview-ink-canvas"></canvas>
+                      </div>
+                      <button class="layer-remove-floating hidden" id="layer-remove-floating" type="button" title="Remove image">×</button>
+                      <button class="reupload-btn hidden" id="reupload-btn" onclick="event.stopPropagation(); document.getElementById('file-input').click()" title="Add another image">+</button>
+                    </div>
+                  </div>
+                </div>
+                <input type="file" id="file-input" class="hidden" accept="image/*" onchange="onFileSelected(event)">
+
+                <div class="editor-controls">
+                  <button class="btn btn-outline" onclick="zoomOut()" title="Zoom Out"><svg t="1778425137151" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8246" width="20" height="20"><path d="M919.264 905.984l-138.912-138.912C851.808 692.32 896 591.328 896 480c0-229.376-186.624-416-416-416S64 250.624 64 480s186.624 416 416 416c95.008 0 182.432-32.384 252.544-86.208l141.44 141.44a31.904 31.904 0 0 0 45.248 0 32 32 0 0 0 0.032-45.248zM128 480C128 285.92 285.92 128 480 128s352 157.92 352 352-157.92 352-352 352S128 674.08 128 480z" p-id="8247"></path><path d="M625.792 448H336a32 32 0 0 0 0 64h289.792a32 32 0 1 0 0-64z" p-id="8248"></path></svg></button>
+                  <button class="btn btn-outline" onclick="zoomIn()" title="Zoom In"><svg t="1778425015985" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="5575" width="20" height="20"><path d="M919.264 905.984l-138.912-138.912C851.808 692.32 896 591.328 896 480c0-229.376-186.624-416-416-416S64 250.624 64 480s186.624 416 416 416c95.008 0 182.432-32.384 252.544-86.208l141.44 141.44a31.904 31.904 0 0 0 45.248 0 32 32 0 0 0 0.032-45.248zM128 480C128 285.92 285.92 128 480 128s352 157.92 352 352-157.92 352-352 352S128 674.08 128 480z" p-id="5576"></path><path d="M625.792 448H512v-112a32 32 0 0 0-64 0V448h-112a32 32 0 0 0 0 64H448v112a32 32 0 1 0 64 0V512h113.792a32 32 0 1 0 0-64z" p-id="5577"></path></svg></button>
+                  <button class="btn btn-outline" onclick="rotateLeft()" title="Rotate Left"><svg t="1778425754928" class="icon" viewBox="0 0 1152 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="16321" width="16" height="16"><path d="M227.767609 455.999858l76.575976-59.519982a47.487985 47.487985 0 0 1 67.263979 3.135999c17.727994 19.519994 16.319995 49.759984-3.135999 67.519979l-159.64795 128.41596c-17.855994 16.319995-45.055986 16.639995-63.26398 0.736L16.407675 435.903864a47.935985 47.935985 0 0 1-4.735999-67.455979 47.487985 47.487985 0 0 1 67.199979-4.735999l54.463983 74.303977C169.175627 190.303941 382.391561 0 640.02348 0c282.783912 0 511.99984 229.215928 511.99984 511.99984s-229.215928 511.99984-511.99984 511.99984a510.52784 510.52784 0 0 1-368.063885-156.095951 47.999985 47.999985 0 0 1 68.991978-66.751979A414.55987 414.55987 0 0 0 640.02348 927.99971c229.759928 0 415.99987-186.239942 415.99987-415.99987S869.783408 95.99997 640.02348 95.99997C429.271546 95.99997 255.0956 252.735921 227.767609 455.999858z" fill="#2A2A2A" p-id="16322"></path></svg></button>
+                  <button class="btn btn-outline" onclick="rotateRight()" title="Rotate Right"><svg t="1778425791447" class="icon" viewBox="0 0 1152 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="18123" width="16" height="16"><path d="M924.256 456l-76.576-59.52a47.488 47.488 0 0 0-67.264 3.136c-17.728 19.52-16.32 49.76 3.136 67.52l159.648 128.416c17.856 16.32 45.056 16.64 63.264 0.736l129.152-160.384c19.84-17.312 21.952-47.52 4.736-67.456a47.488 47.488 0 0 0-67.2-4.736l-54.464 74.304C982.848 190.304 769.632 0 512 0 229.216 0 0 229.216 0 512s229.216 512 512 512c140.608 0 272.256-57.024 368.064-156.096a48 48 0 0 0-68.992-66.752A414.56 414.56 0 0 1 512 928C282.24 928 96 741.76 96 512S282.24 96 512 96c210.752 0 384.928 156.736 412.256 360z" fill="#2A2A2A" p-id="18124"></path></svg></button>
+                  <button class="btn btn-outline" onclick="resetTransform()" title="Reset"><svg t="1778425203120" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="10072" width="20" height="20"><path d="M831.167365 607.851819c-15.128556-6.096582-32.063506 1.354796-38.160088 16.483352-46.288864 115.609261-156.478942 190.348842-281.120177 190.348842-104.770893 0-199.606615-52.837045-254.475854-138.640794l193.735832 39.514885c15.805954 3.161191 31.386108-6.999779 34.547299-22.805734 3.161191-15.805954-6.999779-31.386108-22.805733-34.547298l-252.895259-51.933848h-0.903198c-0.677398-0.225799-1.580595-0.225799-2.257993-0.2258H202.993605c-0.677398 0-1.354796 0-2.032194 0.2258-0.451599 0-0.677398 0-1.128996 0.225799-0.677398 0-1.128997 0.225799-1.806395 0.225799-0.451599 0-0.903197 0.225799-1.128997 0.2258-0.451599 0.225799-1.128997 0.225799-1.580595 0.451599-0.451599 0.225799-0.903197 0.225799-1.354796 0.451598-0.225799 0.225799-0.677398 0.225799-0.903198 0.2258-0.225799 0-0.225799 0.225799-0.451598 0.225799l-1.354796 0.677398-1.354796 0.677398c-0.451599 0.225799-0.677398 0.451599-1.128997 0.677398-0.451599 0.225799-1.128997 0.677398-1.580595 0.903197-0.225799 0-0.225799 0.225799-0.451599 0.2258-0.225799 0.225799-0.451599 0.225799-0.451599 0.451598-0.451599 0.451599-0.903197 0.677398-1.580595 1.128997-0.225799 0.225799-0.451599 0.451599-0.903197 0.677398l-1.354797 1.354796c-0.225799 0.225799-0.451599 0.451599-0.677398 0.903197-0.451599 0.451599-0.677398 0.903197-1.128996 1.354796-0.225799 0.225799-0.451599 0.677398-0.677398 0.903198-0.225799 0.451599-0.677398 0.903197-0.903198 1.354796-0.225799 0.451599-0.451599 0.677398-0.677398 1.128996l-0.677398 1.354797c-0.225799 0.451599-0.451599 0.677398-0.451598 1.128996-0.225799 0.451599-0.451599 0.903197-0.677398 1.580596-0.225799 0.451599-0.225799 0.677398-0.451599 1.128996-0.225799 0.677398-0.451599 1.128997-0.451599 1.806395 0 0.451599-0.225799 0.677398-0.225799 1.128997-0.225799 0.677398-0.225799 1.354796-0.451599 2.257993v1.128997L141.350386 887.842999c-2.032194 16.031753 9.257773 30.70871 25.289526 32.966703 1.354796 0.225799 2.483793 0.225799 3.838589 0.2258 14.451158 0 27.095921-10.838368 29.128114-25.515326l21.676737-168.672105c23.483131 31.837707 52.385447 59.836825 85.577949 82.868357 60.514223 41.772878 131.189416 63.675413 205.025799 63.675413s144.511577-22.128335 205.0258-63.675413c58.933627-40.643881 104.093495-97.319515 130.737817-163.704521 5.870783-15.128556-1.354796-32.289305-16.483352-38.160088zM857.134289 103.190298c-16.031753-2.032194-30.70871 9.257773-32.966704 25.289526l-21.676736 168.672105c-23.483131-31.837707-52.385447-59.836825-85.577949-82.642557-60.514223-41.772878-131.189416-63.675413-205.0258-63.675414-73.610584 0-144.511577 22.128335-205.025799 63.675414-58.933627 40.643881-104.093495 97.319515-130.737817 163.70452-6.096582 15.128556 1.354796 32.063506 16.483352 38.160088 15.128556 6.096582 32.063506-1.354796 38.160088-16.483352 46.288864-115.609261 156.478942-190.348842 281.120176-190.348842 104.770893 0 199.606615 52.837045 254.475855 138.640794L572.627122 308.441896c-15.805954-3.161191-31.386108 6.999779-34.547298 22.805734-3.161191 15.805954 6.999779 31.386108 22.805733 34.547298l253.572657 51.708049h0.451599c0.677398 0.225799 1.580595 0.225799 2.257993 0.451599h0.451599c0.903197 0 1.806395 0.225799 2.709592 0.225799h2.257993c0.451599 0 0.903197 0 1.128997-0.225799 0.451599 0 0.903197-0.225799 1.354796-0.2258 0.451599 0 0.677398-0.225799 1.128996-0.225799s0.903197-0.225799 1.580596-0.451599c0.225799 0 0.677398-0.225799 0.903197-0.225799 0.677398-0.225799 1.354796-0.451599 1.806395-0.677398 0.225799 0 0.225799 0 0.451599-0.2258 0.903197-0.225799 1.580595-0.677398 2.483792-1.128996 0.225799-0.225799 0.451599-0.225799 0.903198-0.451599s0.903197-0.451599 1.354796-0.903197c0.225799-0.225799 0.677398-0.451599 0.903197-0.677398 0.225799 0 0.225799-0.225799 0.451599-0.2258l0.451598-0.451598c0.451599-0.451599 1.128997-0.677398 1.580596-1.128997l0.677398-0.677398 1.354796-1.354796c0.225799-0.225799 0.451599-0.451599 0.677398-0.903197 0.451599-0.451599 0.677398-0.903197 1.128997-1.354796 0.225799-0.225799 0.451599-0.677398 0.677398-0.903198 0.225799-0.451599 0.677398-0.903197 0.903197-1.354796 0.225799-0.451599 0.451599-0.677398 0.677398-1.128996l0.677398-1.354797c0.225799-0.451599 0.451599-0.903197 0.677398-1.128996l0.677398-1.354796c0.225799-0.451599 0.225799-0.903197 0.451599-1.354796 0.225799-0.451599 0.225799-1.128997 0.451598-1.580596 0-0.451599 0.225799-0.677398 0.2258-1.128996 0.225799-0.677398 0.225799-1.354796 0.451598-2.032194 0-0.225799 0-0.451599 0.2258-0.677398v-0.2258l32.966703-256.282249c2.709592-16.257552-8.806174-30.934509-24.837927-32.966703z" fill="#040000" p-id="10073"></path></svg></button>
+                <div class="display-mode-wrap" id="display-mode-wrap">
+                  <button type="button" class="display-mode-trigger" id="display-mode-trigger" onclick="toggleDisplayModeDropdown()">
+                    <span id="display-mode-label">Dither</span>
+                    <span class="display-mode-caret">▾</span>
+                  </button>
+                  <div class="display-mode-menu hidden" id="display-mode-menu">
+                    <div class="display-mode-option selected" data-val="dither" onclick="selectDisplayMode('dither')">Dither</div>
+                    <div class="display-mode-option" data-val="nearest" onclick="selectDisplayMode('nearest')">Nearest</div>
+                  </div>
+                </div>
+                </div>
+
+                <div class="upload-actions">
+                  <button class="btn btn-success" onclick="uploadWithDisplay()">Upload &amp; Display</button>
+                  <button class="btn btn-outline" onclick="uploadOnly()">Upload Only</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="mode-main-side">
+              <div>
+                <div class="section-title">Saved Photos <span class="status-inline" id="photo-count"></span></div>
+                <div class="storage-bar-wrap" style="margin-bottom:12px;">
+                  <div class="storage-bar-fill" id="storage-bar" style="width: 0%;"></div>
+                </div>
+                <div class="storage-text" id="storage-detail" style="margin-top:2px;margin-bottom:2px;"></div>
+                <div class="photo-grid" id="photo-grid">
+                  <div class="empty-photos">
+                    No photos yet
+                  </div>
+                </div>
+                <div class="pagination" id="photo-pagination" style="display:none;">
+                  <button class="btn btn-outline btn-sm" id="pg-prev" onclick="goPhotoPage(photoPage - 1)">Prev</button>
+                  <span class="pg-info" id="pg-info" style="font-size:13px;color:#888;"></span>
+                  <button class="btn btn-outline btn-sm" id="pg-next" onclick="goPhotoPage(photoPage + 1)">Next</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="bottom-bar">
+      <button class="btn btn-outline" onclick="showSettings()">Settings</button>
+    </div>
+    <div class="copyright-bar">Copyright &copy;2026 M5Stack</div>
+  </div>
+
+  <!-- ===== Unified Settings Modal ===== -->
+  <div class="modal-overlay hidden" id="settings-modal" onclick="hideSettings(event)">
+    <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="modal-body">
+        <div class="modal-title">Settings</div>
+
+        <!-- Display -->
+        <div class="settings-section">
+          <div class="section-title">Display</div>
+          <div style="margin-bottom:14px;">
+            <label class="form-label">Orientation</label>
+            <div class="segmented" id="orient-seg">
+              <button data-val="landscape" class="active" onclick="selectOrient('landscape')"><span class="seg-title">Landscape</span><span class="seg-meta">600&times;400</span></button>
+              <button data-val="portrait" onclick="selectOrient('portrait')"><span class="seg-title">Portrait</span><span class="seg-meta">400&times;600</span></button>
+            </div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <div class="toggle-wrap">
+              <label class="toggle">
+                <input type="checkbox" id="auto-toggle" onchange="onAutoToggle()">
+                <span class="slider"></span>
+              </label>
+              <span style="font-size:14px;font-weight:500;">Auto Slideshow</span>
+            </div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <div class="toggle-wrap">
+              <label class="toggle">
+                <input type="checkbox" id="low-power-toggle" onchange="onLowPowerToggle()">
+                <span class="slider"></span>
+              </label>
+              <span style="font-size:14px;font-weight:500;">Low Power Mode</span>
+            </div>
+            <div style="margin-top:8px;font-size:12px;line-height:1.55;color:var(--muted);">
+              In low-power boot, the device powers off 1 minute after AP disconnects. With Auto Slideshow on, it wakes on schedule, refreshes the photo, then returns to sleep. Note: manual double-press shutdown disables auto wake.
+            </div>
+          </div>
+          <div class="form-group hidden" id="interval-group">
+            <label class="form-label">Interval (minutes)</label>
+            <input type="number" class="form-input" id="interval-input" value="60" min="1" max="1440" onchange="onIntervalChange()">
+          </div>
+        </div>
+
+        <!-- Wi-Fi -->
+        <div class="settings-section" id="settings-wifi-section">
+          <div class="section-title">Wi-Fi</div>
+          <div class="form-group">
+            <label class="form-label">SSID</label>
+            <div class="ssid-select" id="settings-ssid-select">
+              <input type="text" class="ssid-select-input" id="settings-ssid-input" placeholder="Wi-Fi name" autocomplete="off" oninput="updateSettingsSaveBtn()">
+              <button type="button" class="ssid-scan-btn" onclick="scanSettingsNetworks()" aria-label="Scan Wi-Fi networks">
+                <span class="ssid-select-caret">▾</span>
+              </button>
+            </div>
+            <div class="ssid-dropdown hidden" id="settings-network-list"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <div class="input-with-icon">
+              <input type="password" class="form-input" id="settings-pwd-input" placeholder="(unchanged)" oninput="updateSettingsSaveBtn()">
+              <button class="input-icon-btn" id="settings-toggle-pwd" onclick="toggleSettingsPassword()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Device -->
+        <div class="settings-section">
+          <div class="section-title">Device</div>
+          <div class="form-group">
+            <label class="form-label">Device Name</label>
+            <input type="text" class="form-input" id="settings-device-name-input" placeholder="papercolor" maxlength="63" autocomplete="off" spellcheck="false" onchange="onSettingsDeviceNameChange()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Boot sound</label>
+            <div class="toggle-wrap">
+              <label class="toggle">
+                <input type="checkbox" id="settings-boot-sound-toggle" onchange="onSettingsBootSoundChange()">
+                <span class="slider"></span>
+              </label>
+              <span style="font-size:14px;font-weight:500;">Enable boot sound</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- System -->
+        <div class="settings-section">
+          <div class="section-title">System</div>
+          <button class="btn btn-danger-outline btn-block" onclick="confirmReset()" style="justify-content:center;">Reset machine</button>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline btn-block" onclick="hideSettings()">Cancel</button>
+        <button class="btn btn-success btn-block hidden" id="settings-save-btn" onclick="saveWiFiSettings()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Confirm Dialog ===== -->
+  <div class="confirm-overlay hidden" id="confirm-dialog">
+    <div class="confirm-box">
+      <div class="confirm-msg" id="confirm-msg">Delete this photo?</div>
+      <div class="confirm-actions">
+        <button class="btn btn-outline btn-block btn-sm" onclick="closeConfirm()">Cancel</button>
+        <button class="btn btn-danger btn-block btn-sm" id="confirm-ok-btn">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Toast ===== -->
+  <div id="toast"></div>
+
+  <!-- ===== Hidden Canvas ===== -->
+  <canvas id="export-canvas" width="600" height="400" class="hidden"></canvas>
+
+</div>
+
+<script>
+// ==================== Global State ====================
+let currentMode = null;
+let selectedWifiMode = null;
+let lockedWifiMode = null;
+let compositionImages = [];
+let selectedImageId = null;
+let nextCompositionImageId = 1;
+const PREVIEW_MAX_SCALE = 10;
+const EPD_QUALITY_DITHER = 200;
+const EPD_STEP_VALUE = 129 * 127;
+const EPD_STEP_DIFF = Math.floor(EPD_STEP_VALUE / 3);
+const EPD_X_STEP = 127 * 29;
+const EPD_Y_STEP = 129 * 48;
+const EPD_PALETTE = [
+  [0, 0, 0],
+  [255, 255, 255],
+  [255, 255, 0],
+  [255, 0, 0],
+  [0, 0, 255],
+  [0, 255, 0],
+];
+const EPD_PALETTE_ORIGINAL = [
+  [0, 0, 0],
+  [255, 255, 255],
+  [255, 243, 56],
+  [191, 0, 0],
+  [0, 0, 255],
+  [67, 138, 28],
+];
+let displayMode = "dither";
+let previewInkRenderToken = 0;
+let previewInkRenderTimer = null;
+let pollingTimer = null;
+let modeList = [];
+let confirmCallback = null;
+let photoPage = 1;
+let photoTotalPages = 1;
+let photoPageCache = {};    // { [page]: { total_pages, names: [...] } }
+let photoCache = {};        // { [name]: { name, url } }
+let photoTotal = 0;
+let photoPageLoading = false;
+
+// ==================== API Helper ====================
+async function apiCall(method, url, body, isFormData) {
+  const opts = { method };
+  if (body) {
+    opts.body = isFormData ? body : JSON.stringify(body);
+    if (!isFormData) opts.headers = { "Content-Type": "application/json" };
+  }
+  let res;
+  try {
+    res = await fetch(url, opts);
+  } catch (e) {
+    throw e;
+  }
+
+  let data = null;
+  try {
+    data = await res.json();
+  } catch (e) {
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    throw new Error("Network request failed");
+  }
+
+  if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
+  return data;
+}
+
+// ==================== Toast ====================
+function showToast(msg, type) {
+  type = type || "";
+  const el = document.getElementById("toast");
+  if (type === "") {
+    el.innerHTML = '<span class="toast-spinner"></span>' + msg;
+  } else {
+    el.textContent = msg;
+  }
+  el.className = type + " show";
+  clearTimeout(el._timeout);
+  if (type !== "") {
+    el._timeout = setTimeout(() => { el.className = ""; }, 2500);
+  }
+}
+
+// ==================== Status Bar ====================
+function updateStatusBar(state) {
+  const indicator = document.querySelector("#status-bar .wifi-indicator");
+  const dot = document.getElementById("wifi-dot");
+  const text = document.getElementById("wifi-status-text");
+  const badge = document.getElementById("mode-badge");
+
+  if (!indicator || !dot || !text || !badge) return;
+  indicator.classList.remove("is-hidden");
+  dot.classList.remove("connected", "connecting");
+  badge.classList.add("hidden");
+
+  // Previous build hid the Wi-Fi indicator when running in the AP-only
+  // local mode. With STA now kept up on LAN we always show the connection
+  // state instead.
+  if (state.connected) {
+    dot.classList.add("connected");
+    const ssidText = state.ssid ? ` | ${state.ssid}` : "";
+    text.textContent = "Wi-Fi: Connected" + ssidText + " | " + (state.ip || "");
+  } else if (state.error === "connecting") {
+    dot.classList.add("connecting");
+    const ssidText = state.ssid ? ` ${state.ssid}` : "";
+    text.textContent = "Wi-Fi: Connecting..." + ssidText;
+  } else if (state.error) {
+    text.textContent = "Wi-Fi Error: " + state.error;
+  } else {
+    indicator.classList.add("is-hidden");
+    text.textContent = "";
+  }
+
+  if (state.mode) {
+    const m = modeList.find(x => x.id === state.mode);
+    badge.textContent = m ? m.name : state.mode;
+    badge.classList.remove("hidden");
+  }
+}
+
+function enterReadyMode(modeId) {
+  if (!modeId) return;
+  hideToast();
+  currentMode = modeId;
+  lockedWifiMode = null;
+  switchPage("mode-page");
+  showModeConfig(currentMode);
+}
+
+async function fetchDeviceReady() {
+  return apiCall("GET", "/api/device/ready");
+}
+
+async function refreshStatusBar() {
+  try {
+    const status = await apiCall("GET", "/api/wifi/status");
+    updateStatusBar(status);
+    return status;
+  } catch (e) {
+    return null;
+  }
+}
+
+// EzData mode and the landing/mode-picker have been removed.
+// The only mode is mode_1 (local photo album); selectLandingMode/goToLanding/
+// showModeSwitch/switchMode and the wifi-page mode-lock helpers are gone with it.
+
+function hideToast() {
+  const el = document.getElementById("toast");
+  el.className = "";
+  clearTimeout(el._timeout);
+}
+
+// ==================== Page Switching ====================
+function switchPage(pageId) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  const page = document.getElementById(pageId);
+  if (page) page.classList.add("active");
+}
+
+// ==================== Confirm Dialog ====================
+function showConfirm(msg, cb) {
+  document.getElementById("confirm-msg").textContent = msg;
+  document.getElementById("confirm-dialog").classList.remove("hidden");
+  confirmCallback = cb;
+  document.getElementById("confirm-ok-btn").onclick = function() {
+    closeConfirm();
+    if (cb) cb();
+  };
+}
+function closeConfirm() {
+  document.getElementById("confirm-dialog").classList.add("hidden");
+  confirmCallback = null;
+}
+
+document.addEventListener("click", e => {
+  const wrap = document.getElementById("wifi-mode-select-wrap");
+  if (wrap && !wrap.contains(e.target)) {
+    toggleWifiModeDropdown(false);
+  }
+});
+
+// ==================== Mode Panel Visibility ====================
+// Only mode_1 (local photo album) exists in this build.
+function showModeConfig(modeId) {
+  document.querySelectorAll(".mode-config").forEach(el => el.classList.add("hidden"));
+  const panel = document.querySelector('.mode-config[data-mode="mode_1"]');
+  if (panel) panel.classList.remove("hidden");
+  applyModeConfig();
+  loadModeConfig();
+  loadPhotoList();
+  loadStorage();
+}
+
+// ==================== WiFi Page ====================
+async function scanNetworks() {
+  const trigger = document.getElementById("ssid-scan-btn");
+  const container = document.getElementById("ssid-select");
+  const list = document.getElementById("network-list");
+  const input = document.getElementById("ssid-input");
+  const previousPlaceholder = input.placeholder;
+
+  if (container.classList.contains("open") && !list.classList.contains("hidden") && !trigger.disabled) {
+    container.classList.remove("open");
+    list.classList.add("hidden");
+    return;
+  }
+
+  trigger.disabled = true;
+  container.classList.add("open");
+  input.placeholder = "Scanning Wi-Fi...";
+  list.innerHTML = '<div class="ssid-loading"><span class="spinner"></span><span>Scanning nearby Wi-Fi networks...</span></div>';
+  list.classList.remove("hidden");
+  list.scrollTop = 0;
+
+  try {
+    const data = await apiCall("GET", "/api/wifi/scan");
+    const networks = Array.isArray(data.networks) ? data.networks : [];
+
+    if (!networks.length) {
+      list.innerHTML = '<div class="ssid-loading">No Wi-Fi networks found.</div>';
+      return;
+    }
+
+    list.innerHTML = networks.map(n => {
+      const encodedSsid = encodeURIComponent(n.ssid || "");
+      return `<div class="network-item" onclick="selectNetwork('${encodedSsid}')">
+        <div class="net-info">
+          <span class="net-signal">${signalIcon(n.rssi)}</span>
+          <span class="net-ssid">${escapeHtml(n.ssid || "")}</span>
+        </div>
+        <span class="net-lock">${n.secure ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>' : ''}</span>
+      </div>`;
+    }).join("");
+  } catch(e) {
+    list.classList.add("hidden");
+    container.classList.remove("open");
+    showToast(e.message, "error");
+  } finally {
+    trigger.disabled = false;
+    input.placeholder = previousPlaceholder;
+  }
+}
+
+function signalIcon(rssi) {
+  let level;
+  if (rssi > -50) level = "s4";
+  else if (rssi > -65) level = "s3";
+  else if (rssi > -75) level = "s2";
+  else level = "s1";
+  return `<span class="signal-icon ${level}"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></span>`;
+}
+
+function escapeHtml(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+
+function selectNetwork(encodedSsid) {
+  const ssid = decodeURIComponent(encodedSsid || "");
+  const input = document.getElementById("ssid-input");
+  const container = document.getElementById("ssid-select");
+  const list = document.getElementById("network-list");
+
+  input.value = ssid;
+  updateWifiPwdPlaceholder();
+  container.classList.remove("open");
+  list.classList.add("hidden");
+}
+
+const ICON_EYE_OPEN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+const ICON_EYE_CLOSED = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+function togglePassword() {
+  const input = document.getElementById("pwd-input");
+  const btn = document.getElementById("toggle-pwd");
+  if (input.type === "password") { input.type = "text"; btn.innerHTML = ICON_EYE_OPEN; }
+  else { input.type = "password"; btn.innerHTML = ICON_EYE_CLOSED; }
+}
+
+async function loadWifiModes() {
+  try {
+    const data = await apiCall("GET", "/api/modes");
+    modeList = data.modes;
+    renderWifiModeButtons();
+  } catch(e) { /* retry later */ }
+}
+
+function renderWifiModeButtons() {
+  const wrap = document.getElementById("wifi-mode-select-wrap");
+  const trigger = document.getElementById("wifi-mode-trigger");
+  const menu = document.getElementById("wifi-mode-menu");
+  if (!wrap || !trigger || !menu) return;
+
+  if (!selectedWifiMode && modeList.length) {
+    selectedWifiMode = modeList[0].id;
+  }
+
+  const selectedMode = modeList.find(m => m.id === selectedWifiMode);
+  trigger.textContent = selectedMode ? selectedMode.name : "Select a mode";
+  trigger.classList.toggle("placeholder", !selectedMode);
+  trigger.setAttribute("aria-expanded", wrap.classList.contains("open") ? "true" : "false");
+
+  menu.innerHTML = modeList.map(m =>
+    `<button type="button" class="mode-select-option${m.id === selectedWifiMode ? " selected" : ""}" role="option" aria-selected="${m.id === selectedWifiMode ? "true" : "false"}" onclick="selectWifiMode('${escapeHtml(m.id)}')">${escapeHtml(m.name)}</button>`
+  ).join("");
+}
+
+function toggleWifiModeDropdown(forceOpen) {
+  const wrap = document.getElementById("wifi-mode-select-wrap");
+  const menu = document.getElementById("wifi-mode-menu");
+  const trigger = document.getElementById("wifi-mode-trigger");
+  if (!wrap || !menu || !trigger) return;
+
+  const shouldOpen = typeof forceOpen === "boolean" ? forceOpen : !wrap.classList.contains("open");
+  wrap.classList.toggle("open", shouldOpen);
+  menu.classList.toggle("hidden", !shouldOpen);
+  trigger.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+}
+
+function selectWifiMode(modeId) {
+  selectedWifiMode = modeId;
+  renderWifiModeButtons();
+  toggleWifiModeDropdown(false);
+}
+
+function highlightModeButton(modeId) {
+  selectWifiMode(modeId);
+}
+
+function sanitizeDeviceNameInput(value) {
+  const normalized = String(value || "").normalize("NFKC").toLowerCase();
+  return normalized.replace(/[^a-z0-9-]/g, "").slice(0, 63);
+}
+
+function syncDeviceNameInput(input) {
+  if (!input) return "papercolor";
+  const sanitized = sanitizeDeviceNameInput(input.value);
+  if (input.value !== sanitized) input.value = sanitized;
+  return sanitized || "papercolor";
+}
+
+function bindDeviceNameInput(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input || input.dataset.bound === "1") return;
+  input.dataset.bound = "1";
+  input.addEventListener("input", () => {
+    syncDeviceNameInput(input);
+  });
+  input.addEventListener("blur", () => {
+    if (!input.value.trim()) input.value = "papercolor";
+    syncDeviceNameInput(input);
+  });
+}
+
+async function loadSetupConfig() {
+  const bootSoundToggle = document.getElementById("wifi-page-boot-sound-toggle");
+  const deviceNameInput = document.getElementById("device-name-input");
+  const ssidInput = document.getElementById("ssid-input");
+  const pwdInput = document.getElementById("pwd-input");
+  if (!bootSoundToggle || !deviceNameInput) return;
+
+  try {
+    const status = await apiCall("GET", "/api/wifi/status");
+    if (typeof status.boot_sound === "boolean") {
+      globalConfig.boot_sound = status.boot_sound;
+    }
+    globalConfig.device_name = sanitizeDeviceNameInput(status.device_name || "papercolor") || "papercolor";
+    wifiOriginalSsid = status.ssid || "";
+    if (ssidInput && wifiOriginalSsid) {
+      ssidInput.value = wifiOriginalSsid;
+    }
+    if (pwdInput) {
+      pwdInput.value = "";
+      pwdInput.placeholder = wifiOriginalSsid ? "(unchanged)" : "Wi-Fi password";
+    }
+  } catch(e) {}
+
+  bootSoundToggle.checked = !!globalConfig.boot_sound;
+  deviceNameInput.value = globalConfig.device_name || "papercolor";
+  syncDeviceNameInput(deviceNameInput);
+  bindWifiSsidInput();
+}
+
+async function saveSetupConfig() {
+  const bootSoundToggle = document.getElementById("wifi-page-boot-sound-toggle");
+  const deviceNameInput = document.getElementById("device-name-input");
+  if (!bootSoundToggle || !deviceNameInput) return;
+  globalConfig.boot_sound = !!bootSoundToggle.checked;
+  globalConfig.device_name = syncDeviceNameInput(deviceNameInput);
+}
+
+async function connectWiFi() {
+  const ssid = document.getElementById("ssid-input").value.trim();
+  const password = document.getElementById("pwd-input").value;
+  const mode = lockedWifiMode || selectedWifiMode;
+  const deviceName = syncDeviceNameInput(document.getElementById("device-name-input"));
+
+  if (!mode) { showToast("Please select a mode", "error"); return; }
+
+  const statusDiv = document.getElementById("conn-status");
+  const btn = document.getElementById("confirm-btn");
+
+  if (!ssid) {
+    if (mode !== "mode_1") {
+      showToast("This mode requires a Wi-Fi connection", "error");
+      return;
+    }
+    statusDiv.classList.remove("hidden", "success", "error");
+    statusDiv.innerHTML = '<span class="spinner"></span> Entering...';
+    btn.disabled = true;
+    btn.textContent = "Entering...";
+    try {
+      await apiCall("POST", "/api/wifi/config", { mode, boot_sound: !!globalConfig.boot_sound, device_name: deviceName });
+      await startPolling({
+        targetMode: mode,
+        successMessage: "Ready! Redirecting...",
+        loadingMessage: "Entering..."
+      });
+    } catch(e) {
+      showToast(e.message, "error");
+      btn.disabled = false;
+      btn.textContent = "Confirm";
+      statusDiv.classList.add("hidden");
+    }
+    return;
+  }
+
+  statusDiv.classList.remove("hidden", "success", "error");
+  statusDiv.innerHTML = '<span class="spinner"></span> Connecting...';
+
+  btn.disabled = true;
+  btn.textContent = "Connecting...";
+
+  try {
+    await apiCall("POST", "/api/wifi/config", { ssid, password, mode, boot_sound: !!globalConfig.boot_sound, device_name: deviceName });
+    await startPolling({
+      targetMode: mode,
+      successMessage: "Connected! Redirecting...",
+      loadingMessage: "Connecting..."
+    });
+  } catch(e) {
+    showToast(e.message, "error");
+    btn.disabled = false;
+    btn.textContent = "Confirm";
+    statusDiv.classList.add("hidden");
+  }
+}
+
+function startPolling(options) {
+  if (pollingTimer) clearInterval(pollingTimer);
+  const statusDiv = document.getElementById("conn-status");
+  const btn = document.getElementById("confirm-btn");
+  const targetMode = options?.targetMode || lockedWifiMode || selectedWifiMode;
+  const successMessage = options?.successMessage || "Ready! Redirecting...";
+  const loadingMessage = options?.loadingMessage || "Connecting...";
+
+  return new Promise((resolve, reject) => {
+    pollingTimer = setInterval(async () => {
+      try {
+        const ready = await fetchDeviceReady();
+        await refreshStatusBar();
+
+        if (ready.ui && ready.ui.can_enter_mode && ready.mode && ready.mode.current) {
+          clearInterval(pollingTimer);
+          pollingTimer = null;
+          statusDiv.classList.remove("error");
+          statusDiv.classList.add("success");
+          statusDiv.innerHTML = successMessage;
+          btn.disabled = false;
+          btn.textContent = "Confirm";
+
+          setTimeout(() => {
+            enterReadyMode(ready.mode.current || targetMode);
+            statusDiv.classList.add("hidden");
+            statusDiv.classList.remove("success");
+          }, 1000);
+          resolve(ready);
+          return;
+        }
+
+        if (ready.wifi && ready.wifi.state === "failed") {
+          clearInterval(pollingTimer);
+          pollingTimer = null;
+          statusDiv.classList.remove("success");
+          statusDiv.classList.add("error");
+          statusDiv.innerHTML = "Connection failed: " + errorMessage(ready.wifi.error);
+          btn.disabled = false;
+          btn.textContent = "Confirm";
+          showToast("Connection failed: " + errorMessage(ready.wifi.error), "error");
+          reject(new Error(ready.wifi.error || "connection failed"));
+          return;
+        }
+
+        statusDiv.classList.remove("hidden", "success", "error");
+        statusDiv.innerHTML = `<span class="spinner"></span> ${loadingMessage}`;
+      } catch(e) {
+        clearInterval(pollingTimer);
+        pollingTimer = null;
+        btn.disabled = false;
+        btn.textContent = "Confirm";
+        statusDiv.classList.add("hidden");
+        reject(e);
+      }
+    }, 2000);
+  });
+}
+
+function errorMessage(err) {
+  const map = { "wrong password": "Wrong password", "timeout": "Connection timeout" };
+  return map[err] || err || "Unknown error";
+}
+
+function getPreviewContainer() {
+  return document.getElementById("preview-container");
+}
+
+function getPreviewComposition() {
+  return document.getElementById("preview-composition");
+}
+
+function getPreviewInkCanvas() {
+  return document.getElementById("preview-ink-canvas");
+}
+
+function getFloatingRemoveButton() {
+  return document.getElementById("layer-remove-floating");
+}
+
+function setPreviewInkVisible(visible) {
+  const container = getPreviewContainer();
+  if (!container) return;
+  container.classList.toggle("preview-ink-visible", visible && hasCompositionImages());
+}
+
+function getSelectedImageLayer() {
+  return compositionImages.find(layer => layer.id === selectedImageId) || null;
+}
+
+function getTopImageLayer() {
+  return compositionImages.length ? compositionImages[compositionImages.length - 1] : null;
+}
+
+function getActiveImageLayer() {
+  return getSelectedImageLayer() || getTopImageLayer();
+}
+
+function hasCompositionImages() {
+  return compositionImages.length > 0;
+}
+
+function updateFloatingRemoveButton() {
+  const button = getFloatingRemoveButton();
+  const container = getPreviewContainer();
+  const layer = getSelectedImageLayer();
+  if (!button || !container || !layer || !layer.el) {
+    if (button) button.classList.add("hidden");
+    return;
+  }
+
+  const containerRect = container.getBoundingClientRect();
+  const layerRect = layer.el.getBoundingClientRect();
+  const x = layerRect.left - containerRect.left - 12;
+  const y = layerRect.top - containerRect.top - 12;
+  button.style.left = `${x}px`;
+  button.style.top = `${y}px`;
+  button.classList.remove("hidden");
+}
+
+function syncPlaceholderState() {
+  const container = getPreviewContainer();
+  const placeholder = document.getElementById("preview-placeholder");
+  const reupload = document.getElementById("reupload-btn");
+  const hasImages = hasCompositionImages();
+
+  container.classList.toggle("has-image", hasImages);
+  placeholder.classList.toggle("hidden", hasImages);
+  reupload.classList.toggle("hidden", !hasImages);
+  if (!hasImages) {
+    setPreviewInkVisible(false);
+    resetDisplayModeToDither();
+  }
+  updateFloatingRemoveButton();
+  schedulePreviewInkRender(true);
+}
+
+function updateLayerZOrder() {
+  compositionImages.forEach((layer, index) => {
+    layer.el.style.zIndex = String(index + 1);
+  });
+}
+
+function clampByte(value) {
+  if (value < 0) return 0;
+  if (value > 255) return 255;
+  return value;
+}
+
+function getEpdColorPair(r0, g0, b0, r1, g1, b1) {
+  let minDistance = Infinity;
+  let bestFirst = EPD_PALETTE[1];
+  let bestSecond = EPD_PALETTE[1];
+
+  const firstDiffs = EPD_PALETTE.map(color => {
+    const dr = r0 - color[0];
+    const dg = g0 - color[1];
+    const db = b0 - color[2];
+    return {
+      dr,
+      dg,
+      db,
+      indiv: dr * dr + dg * dg + db * db,
+    };
+  });
+
+  const secondDiffs = EPD_PALETTE.map(color => {
+    const dr = r1 - color[0];
+    const dg = g1 - color[1];
+    const db = b1 - color[2];
+    return {
+      dr,
+      dg,
+      db,
+      indiv: dr * dr + dg * dg + db * db,
+    };
+  });
+
+  for (let i = 0; i < EPD_PALETTE.length; i++) {
+    for (let j = 0; j < EPD_PALETTE.length; j++) {
+      const dr = firstDiffs[i].dr + secondDiffs[j].dr;
+      const dg = firstDiffs[i].dg + secondDiffs[j].dg;
+      const db = firstDiffs[i].db + secondDiffs[j].db;
+      const distance = (dr * dr + dg * dg + db * db) + firstDiffs[i].indiv + secondDiffs[j].indiv;
+      if (distance < minDistance) {
+        minDistance = distance;
+        bestFirst = EPD_PALETTE[i];
+        bestSecond = EPD_PALETTE[j];
+      }
+    }
+  }
+
+  return [bestFirst, bestSecond];
+}
+
+function quantizeToEpdPalette(imageData) {
+  const { data, width, height } = imageData;
+  for (let y = 0; y < height; y++) {
+    let biasBase = (y * EPD_Y_STEP) % EPD_STEP_VALUE;
+    let r0 = 0;
+    let g0 = 0;
+    let b0 = 0;
+    let prevIndex = -1;
+    for (let x = 0; x <= width; x++) {
+      let r = 128;
+      let g = 128;
+      let b = 128;
+      let currentIndex = -1;
+      if (x < width) {
+        currentIndex = (y * width + x) * 4;
+        r = data[currentIndex];
+        g = data[currentIndex + 1];
+        b = data[currentIndex + 2];
+      }
+
+      biasBase -= EPD_X_STEP;
+      if (biasBase < 0) biasBase += EPD_STEP_VALUE;
+
+      let biasR = biasBase;
+      let biasG = biasBase - EPD_STEP_DIFF;
+      if (biasG < 0) biasG += EPD_STEP_VALUE;
+      let biasB = biasG - EPD_STEP_DIFF;
+      if (biasB < 0) biasB += EPD_STEP_VALUE;
+
+      biasB = biasB * 2 - (EPD_STEP_VALUE - 1);
+      biasG = biasG * 2 - (EPD_STEP_VALUE - 1);
+      biasR = biasR * 2 - (EPD_STEP_VALUE - 1);
+
+      let bias = biasR + biasG + biasB;
+      bias = (bias * EPD_QUALITY_DITHER) >> 16;
+      biasR = (biasR * EPD_QUALITY_DITHER) >> 16;
+      biasG = (biasG * EPD_QUALITY_DITHER) >> 16;
+      biasB = (biasB * EPD_QUALITY_DITHER) >> 16;
+
+      r = clampByte(r + bias + biasR);
+      g = clampByte(g + bias + biasG);
+      b = clampByte(b + bias + biasB);
+
+      if (x & 1) {
+        const [prevColor, currentColor] = getEpdColorPair(r0, g0, b0, r, g, b);
+        if (prevIndex >= 0) {
+          data[prevIndex] = prevColor[0];
+          data[prevIndex + 1] = prevColor[1];
+          data[prevIndex + 2] = prevColor[2];
+          data[prevIndex + 3] = 255;
+        }
+        if (currentIndex >= 0) {
+          data[currentIndex] = currentColor[0];
+          data[currentIndex + 1] = currentColor[1];
+          data[currentIndex + 2] = currentColor[2];
+          data[currentIndex + 3] = 255;
+        }
+      } else {
+        r0 = r;
+        g0 = g;
+        b0 = b;
+        prevIndex = currentIndex;
+      }
+    }
+  }
+}
+
+function quantizeToEpdPaletteOriginal(imageData) {
+  const { data } = imageData;
+  const palette = EPD_PALETTE_ORIGINAL;
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i], g = data[i + 1], b = data[i + 2];
+    let best = palette[0], bestDist = Infinity;
+    for (let j = 0; j < palette.length; j++) {
+      const c = palette[j];
+      const dist = (r - c[0]) ** 2 + (g - c[1]) ** 2 + (b - c[2]) ** 2;
+      if (dist < bestDist) { bestDist = dist; best = c; }
+    }
+    data[i] = best[0]; data[i + 1] = best[1]; data[i + 2] = best[2];
+    data[i + 3] = 255;
+  }
+}
+
+function renderPreviewInkEffect() {
+  const token = ++previewInkRenderToken;
+  requestAnimationFrame(() => {
+    if (token !== previewInkRenderToken) return;
+    const overlay = getPreviewInkCanvas();
+    if (!overlay) return;
+    if (!hasCompositionImages()) {
+      overlay.width = 0;
+      overlay.height = 0;
+      setPreviewInkVisible(false);
+      return;
+    }
+
+    const source = exportToCanvas();
+    if (!source) {
+      setPreviewInkVisible(false);
+      return;
+    }
+
+    const [cw, ch] = getCanvasSize();
+    overlay.width = cw;
+    overlay.height = ch;
+    const ctx = overlay.getContext("2d", { willReadFrequently: true });
+    if (!ctx) {
+      setPreviewInkVisible(false);
+      return;
+    }
+    ctx.clearRect(0, 0, cw, ch);
+    ctx.fillStyle = "#eef1f4";
+    ctx.fillRect(0, 0, cw, ch);
+    ctx.drawImage(source, 0, 0, cw, ch);
+    const imageData = ctx.getImageData(0, 0, cw, ch);
+    if (displayMode === "nearest") {
+      quantizeToEpdPaletteOriginal(imageData);
+    } else {
+      quantizeToEpdPalette(imageData);
+    }
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i] === 255 && data[i + 1] === 255 && data[i + 2] === 255) {
+        data[i] = 238;
+        data[i + 1] = 241;
+        data[i + 2] = 244;
+      }
+    }
+    ctx.putImageData(imageData, 0, 0);
+    setPreviewInkVisible(true);
+  });
+}
+
+function schedulePreviewInkRender(immediate) {
+  if (previewInkRenderTimer) {
+    clearTimeout(previewInkRenderTimer);
+    previewInkRenderTimer = null;
+  }
+  if (!hasCompositionImages()) {
+    setPreviewInkVisible(false);
+    return;
+  }
+  if (immediate) {
+    renderPreviewInkEffect();
+    return;
+  }
+  setPreviewInkVisible(false);
+  previewInkRenderTimer = setTimeout(() => {
+    previewInkRenderTimer = null;
+    renderPreviewInkEffect();
+  }, 100);
+}
+
+function applyTransform(layer) {
+  if (!layer || !layer.el) return;
+  const { x, y, scale, rotation } = layer.transform;
+  layer.el.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${scale}) rotate(${rotation}deg)`;
+  updateFloatingRemoveButton();
+  schedulePreviewInkRender();
+}
+
+function fitImageToContainer(layer, resetTransform) {
+  if (!layer || !layer.imgEl) return;
+  const container = getPreviewContainer();
+  const cw = container.clientWidth;
+  const ch = container.clientHeight;
+  const iw = layer.naturalWidth;
+  const ih = layer.naturalHeight;
+  if (!cw || !ch || !iw || !ih) return;
+
+  layer.baseFitScale = Math.min(cw / iw, ch / ih, 1);
+  layer.baseWidth = iw * layer.baseFitScale;
+  layer.baseHeight = ih * layer.baseFitScale;
+  layer.el.style.width = `${layer.baseWidth}px`;
+  layer.el.style.height = `${layer.baseHeight}px`;
+  if (resetTransform) {
+    layer.transform = { x: 0, y: 0, scale: 1, rotation: 0 };
+  }
+  applyTransform(layer);
+}
+
+function rerenderCompositionLayout(resetTransform) {
+  compositionImages.forEach(layer => fitImageToContainer(layer, resetTransform));
+  schedulePreviewInkRender(true);
+}
+
+function selectImageLayer(id, bringToFront) {
+  const index = compositionImages.findIndex(layer => layer.id === id);
+  if (index === -1) return;
+
+  let layer = compositionImages[index];
+  if (bringToFront) {
+    compositionImages.splice(index, 1);
+    compositionImages.push(layer);
+    layer = compositionImages[compositionImages.length - 1];
+  }
+
+  selectedImageId = layer.id;
+  compositionImages.forEach(item => item.el.classList.toggle("selected", item.id === selectedImageId));
+  updateLayerZOrder();
+  updateFloatingRemoveButton();
+}
+
+function clearSelectedImageLayer() {
+  selectedImageId = null;
+  compositionImages.forEach(item => item.el.classList.remove("selected"));
+  updateFloatingRemoveButton();
+}
+
+function removeImageLayer(id) {
+  const index = compositionImages.findIndex(layer => layer.id === id);
+  if (index === -1) return;
+
+  const [layer] = compositionImages.splice(index, 1);
+  if (layer.el && layer.el.parentNode) {
+    layer.el.parentNode.removeChild(layer.el);
+  }
+
+  if (selectedImageId === id) {
+    selectedImageId = compositionImages.length ? compositionImages[compositionImages.length - 1].id : null;
+  }
+
+  compositionImages.forEach(item => item.el.classList.toggle("selected", item.id === selectedImageId));
+  updateLayerZOrder();
+  updateFloatingRemoveButton();
+  syncPlaceholderState();
+}
+
+function createPreviewLayer(src, naturalWidth, naturalHeight) {
+  const composition = getPreviewComposition();
+  const layerId = nextCompositionImageId++;
+  const layerEl = document.createElement("div");
+  layerEl.className = "preview-layer";
+  layerEl.dataset.layerId = String(layerId);
+
+  const img = document.createElement("img");
+  img.src = src;
+  img.alt = "Preview layer";
+
+  const removeBtn = document.createElement("button");
+  removeBtn.className = "layer-remove-btn";
+  removeBtn.type = "button";
+  removeBtn.textContent = "×";
+  removeBtn.title = "Remove image";
+  removeBtn.addEventListener("click", event => {
+    event.stopPropagation();
+    removeImageLayer(layerId);
+  });
+
+  layerEl.appendChild(img);
+  layerEl.appendChild(removeBtn);
+  layerEl.addEventListener("pointerdown", () => selectImageLayer(layerId, true));
+  layerEl.addEventListener("mousedown", () => selectImageLayer(layerId, true));
+  layerEl.addEventListener("touchstart", () => selectImageLayer(layerId, true), { passive: true });
+  composition.appendChild(layerEl);
+
+  const layer = {
+    id: layerId,
+    src,
+    naturalWidth,
+    naturalHeight,
+    baseFitScale: 1,
+    baseWidth: naturalWidth,
+    baseHeight: naturalHeight,
+    transform: { x: 0, y: 0, scale: 1, rotation: 0 },
+    el: layerEl,
+    imgEl: img,
+  };
+
+  compositionImages.push(layer);
+  fitImageToContainer(layer, true);
+  syncPlaceholderState();
+  selectImageLayer(layerId, true);
+}
+
+// ==================== Settings ====================
+let modeConfig = {
+  orientation: "landscape",
+  auto_slideshow: false,
+  low_power_mode: false,
+  interval_minutes: 60,
+};
+
+let globalConfig = {
+  boot_sound: false,
+  device_name: "papercolor",
+};
+
+function getCanvasSize() {
+  return modeConfig.orientation === "portrait" ? [400, 600] : [600, 400];
+}
+
+async function loadModeConfig() {
+  try {
+    const data = await apiCall("GET", "/api/mode/mode_1/config");
+    modeConfig = {
+      ...modeConfig,
+      ...data,
+      low_power_mode: !!data.low_power_mode,
+    };
+    applyModeConfig();
+  } catch(e) {}
+}
+
+function applyModeConfig() {
+  const container = document.getElementById("preview-container");
+  const frame = document.getElementById("device-frame");
+  const label = document.getElementById("orientation-label");
+  const [w, h] = getCanvasSize();
+  const isPortrait = modeConfig.orientation === "portrait";
+  const shellWidth = isPortrait ? 430 : 760;
+  const frameConfig = isPortrait
+    ? {
+        deviceWidth: 68.3,
+        deviceHeight: 101.3,
+        top: 5.95,
+        right: 5.95,
+        bottom: 10.75,
+        left: 5.95,
+      }
+    : {
+        deviceWidth: 101.3,
+        deviceHeight: 68.3,
+        top: 5.95,
+        right: 5.95,
+        bottom: 10.75,
+        left: 10.75,
+      };
+
+  frame.style.setProperty("--device-width", String(frameConfig.deviceWidth));
+  frame.style.setProperty("--device-height", String(frameConfig.deviceHeight));
+  frame.style.setProperty("--frame-top", String(frameConfig.top));
+  frame.style.setProperty("--frame-right", String(frameConfig.right));
+  frame.style.setProperty("--frame-bottom", String(frameConfig.bottom));
+  frame.style.setProperty("--frame-left", String(frameConfig.left));
+  frame.style.setProperty("--shell-display-width", `${shellWidth}px`);
+
+  container.style.aspectRatio = w + "/" + h;
+  container.style.width = "";
+  container.style.height = "";
+  label.textContent = w + "×" + h;
+
+  requestAnimationFrame(() => {
+    rerenderCompositionLayout(false);
+  });
+}
+
+// ==================== Unified Settings Modal ====================
+let settingsOriginalSsid = "";
+
+function showSettings() {
+  const m = document.getElementById("settings-modal");
+  // Pre-fill Display
+  updateOrientSeg(modeConfig.orientation);
+  document.getElementById("auto-toggle").checked = modeConfig.auto_slideshow;
+  document.getElementById("low-power-toggle").checked = !!modeConfig.low_power_mode;
+  document.getElementById("interval-input").value = modeConfig.interval_minutes;
+  document.getElementById("interval-group").classList.toggle("hidden", !modeConfig.auto_slideshow);
+
+  // Pre-fill Wi-Fi & Device (async)
+  loadSettingsDeviceInfo();
+
+  // Wi-Fi section is always visible: the device runs only the local-album
+  // mode and we still want the user to be able to change Wi-Fi creds from
+  // the LAN-served page.
+  const wifiSection = document.getElementById("settings-wifi-section");
+  if (wifiSection) wifiSection.classList.remove("hidden");
+
+  // Reset Save button
+  const saveBtn = document.getElementById("settings-save-btn");
+  if (saveBtn) saveBtn.classList.add("hidden");
+
+  document.body.style.overflow = "hidden";
+  m.classList.remove("hidden");
+}
+
+async function loadSettingsDeviceInfo() {
+  try {
+    const status = await apiCall("GET", "/api/wifi/status");
+    settingsOriginalSsid = status.ssid || "";
+    const ssidInput = document.getElementById("settings-ssid-input");
+    const pwdInput = document.getElementById("settings-pwd-input");
+    if (ssidInput) ssidInput.value = settingsOriginalSsid;
+    if (pwdInput) { pwdInput.value = ""; pwdInput.type = "password"; pwdInput.placeholder = settingsOriginalSsid ? "(unchanged)" : "Wi-Fi password"; }
+    const toggleBtn = document.getElementById("settings-toggle-pwd");
+    if (toggleBtn) toggleBtn.innerHTML = ICON_EYE_CLOSED;
+    const dnInput = document.getElementById("settings-device-name-input");
+    if (dnInput) dnInput.value = sanitizeDeviceNameInput(status.device_name || "papercolor") || "papercolor";
+    const bsToggle = document.getElementById("settings-boot-sound-toggle");
+    if (bsToggle) bsToggle.checked = !!status.boot_sound;
+  } catch(e) {
+    settingsOriginalSsid = "";
+    const dnInput = document.getElementById("settings-device-name-input");
+    if (dnInput) dnInput.value = globalConfig.device_name || "papercolor";
+    const bsToggle = document.getElementById("settings-boot-sound-toggle");
+    if (bsToggle) bsToggle.checked = !!globalConfig.boot_sound;
+  }
+}
+
+function hideSettings(e) {
+  if (e && e.target !== document.getElementById("settings-modal")) return;
+  document.getElementById("settings-modal").classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+// ---------- Display: instant save ----------
+function selectOrient(val) {
+  modeConfig.orientation = val;
+  updateOrientSeg(val);
+  saveDisplaySetting({ orientation: val });
+}
+
+function updateOrientSeg(val) {
+  document.querySelectorAll("#orient-seg button").forEach(b => {
+    b.classList.toggle("active", b.dataset.val === val);
+  });
+}
+
+function onAutoToggle() {
+  const on = document.getElementById("auto-toggle").checked;
+  modeConfig.auto_slideshow = on;
+  document.getElementById("interval-group").classList.toggle("hidden", !on);
+  saveDisplaySetting({ auto_slideshow: on });
+}
+
+function onLowPowerToggle() {
+  const on = document.getElementById("low-power-toggle").checked;
+  modeConfig.low_power_mode = on;
+  saveDisplaySetting({ low_power_mode: on });
+}
+
+function onIntervalChange() {
+  const ival = parseInt(document.getElementById("interval-input").value) || 60;
+  modeConfig.interval_minutes = Math.max(1, ival);
+  saveDisplaySetting({ interval_minutes: modeConfig.interval_minutes });
+}
+
+async function saveDisplaySetting(patch) {
+  const apiPath = "/api/mode/" + (currentMode || "mode_1") + "/config";
+  try {
+    const data = await apiCall("POST", apiPath, patch);
+    if (data && typeof data === "object") {
+      const nextModeConfig = {};
+      if ("orientation" in data) nextModeConfig.orientation = data.orientation;
+      if ("auto_slideshow" in data) nextModeConfig.auto_slideshow = data.auto_slideshow;
+      if ("interval_minutes" in data) nextModeConfig.interval_minutes = data.interval_minutes;
+      if ("low_power_mode" in data) nextModeConfig.low_power_mode = data.low_power_mode;
+      Object.assign(modeConfig, nextModeConfig);
+    }
+    applyModeConfig();
+    showToast("Saved", "success");
+  } catch(e) { showToast(e.message, "error"); }
+}
+
+// ---------- Device: instant save ----------
+function onSettingsDeviceNameChange() {
+  const input = document.getElementById("settings-device-name-input");
+  const name = syncDeviceNameInput(input);
+  globalConfig.device_name = name;
+  apiCall("POST", "/api/wifi/config", { device_name: name })
+    .then(() => showToast("Saved", "success"))
+    .catch(e => showToast(e.message, "error"));
+}
+
+function onSettingsBootSoundChange() {
+  const on = document.getElementById("settings-boot-sound-toggle").checked;
+  globalConfig.boot_sound = on;
+  apiCall("POST", "/api/wifi/config", { boot_sound: on })
+    .then(() => showToast("Saved", "success"))
+    .catch(e => showToast(e.message, "error"));
+}
+
+// ---------- Wi-Fi: Save button logic ----------
+function updateSettingsSaveBtn() {
+  const ssid = document.getElementById("settings-ssid-input").value.trim();
+  const pwd = document.getElementById("settings-pwd-input").value;
+  const wifiChanged = (ssid !== settingsOriginalSsid) || (pwd.length > 0);
+  document.getElementById("settings-save-btn").classList.toggle("hidden", !wifiChanged);
+}
+
+function toggleSettingsPassword() {
+  const input = document.getElementById("settings-pwd-input");
+  const btn = document.getElementById("settings-toggle-pwd");
+  if (input.type === "password") { input.type = "text"; btn.innerHTML = ICON_EYE_OPEN; }
+  else { input.type = "password"; btn.innerHTML = ICON_EYE_CLOSED; }
+}
+
+async function scanSettingsNetworks() {
+  const container = document.getElementById("settings-ssid-select");
+  const list = document.getElementById("settings-network-list");
+  const input = document.getElementById("settings-ssid-input");
+  if (!container || !list || !input) return;
+  if (container.classList.contains("open") && !list.classList.contains("hidden")) {
+    container.classList.remove("open"); list.classList.add("hidden"); return;
+  }
+  container.classList.add("open");
+  input.placeholder = "Scanning Wi-Fi...";
+  list.innerHTML = '<div class="ssid-loading"><span class="spinner"></span><span>Scanning...</span></div>';
+  list.classList.remove("hidden");
+  try {
+    const data = await apiCall("GET", "/api/wifi/scan");
+    const networks = Array.isArray(data.networks) ? data.networks : [];
+    if (!networks.length) { list.innerHTML = '<div class="ssid-loading">No networks found.</div>'; return; }
+    list.innerHTML = networks.map(n => {
+      const encodedSsid = encodeURIComponent(n.ssid || "");
+      return `<div class="network-item" onclick="selectSettingsNetwork('${encodedSsid}')">
+        <div class="net-info"><span class="net-signal">${signalIcon(n.rssi)}</span><span class="net-ssid">${escapeHtml(n.ssid || "")}</span></div>
+        <span class="net-lock">${n.secure ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>' : ''}</span>
+      </div>`;
+    }).join("");
+  } catch(e) { list.classList.add("hidden"); container.classList.remove("open"); }
+  finally { input.placeholder = "Wi-Fi name"; }
+}
+
+function selectSettingsNetwork(encodedSsid) {
+  const ssid = decodeURIComponent(encodedSsid || "");
+  document.getElementById("settings-ssid-input").value = ssid;
+  document.getElementById("settings-ssid-select").classList.remove("open");
+  document.getElementById("settings-network-list").classList.add("hidden");
+  updateSettingsSaveBtn();
+}
+
+async function saveWiFiSettings() {
+  const saveBtn = document.getElementById("settings-save-btn");
+  if (saveBtn.classList.contains("hidden")) return;
+  const ssid = document.getElementById("settings-ssid-input").value.trim();
+  const password = document.getElementById("settings-pwd-input").value;
+  const body = {};
+  if (ssid) body.ssid = ssid;
+  if (password || (ssid && ssid !== settingsOriginalSsid)) body.password = password;
+  try {
+    showToast("Saving...", "");
+    await apiCall("POST", "/api/wifi/config", body);
+    document.getElementById("settings-modal").classList.add("hidden");
+    if (ssid) {
+      let attempts = 0;
+      const check = setInterval(async () => {
+        try {
+          const s = await apiCall("GET", "/api/wifi/status");
+          updateStatusBar(s);
+          if (s.connected || ++attempts > 8) {
+            clearInterval(check);
+            if (s.connected) showToast("Wi-Fi connected", "success");
+            else showToast("Settings saved", "success");
+          }
+        } catch(e) { clearInterval(check); }
+      }, 2000);
+    } else {
+      showToast("Settings saved", "success");
+    }
+  } catch(e) { showToast(e.message, "error"); }
+}
+
+// ---------- System: factory reset ----------
+function confirmReset() {
+  hideSettings();
+  showConfirm("Reset machine to factory defaults? This cannot be undone. After reset, the device will power off.", executeReset);
+}
+
+async function executeReset() {
+  try {
+    await apiCall("POST", "/api/system/reset");
+  } catch(e) {
+    showToast(e.message, "error");
+    return;
+  }
+
+  // Factory reset will power off the device; just clear local UI state.
+  // Landing page is gone, so we don't navigate anywhere.
+  currentMode = null;
+  selectedWifiMode = null;
+  lockedWifiMode = null;
+}
+
+// ---------- Wi-Fi page: password placeholder ----------
+let wifiOriginalSsid = "";
+
+function updateWifiPwdPlaceholder() {
+  const input = document.getElementById("pwd-input");
+  const ssidInput = document.getElementById("ssid-input");
+  if (!input || !ssidInput) return;
+  const currentSsid = ssidInput.value.trim();
+  input.placeholder = (currentSsid !== wifiOriginalSsid) ? "Wi-Fi password" : "(unchanged)";
+}
+
+function bindWifiSsidInput() {
+  const input = document.getElementById("ssid-input");
+  if (!input || input.dataset.ssidBound === "1") return;
+  input.dataset.ssidBound = "1";
+  input.addEventListener("input", () => updateWifiPwdPlaceholder());
+}
+
+// ==================== Storage ====================
+async function loadStorage() {
+  try {
+    const info = await apiCall("GET", "/api/storage");
+    const pct = info.total > 0 ? (info.used / info.total * 100) : 0;
+    const usedMB = (info.used / 1024 / 1024).toFixed(1);
+    const totalMB = (info.total / 1024 / 1024).toFixed(1);
+    const freeMB = (info.free / 1024 / 1024).toFixed(1);
+
+    const bar = document.getElementById("storage-bar");
+    const detail = document.getElementById("storage-detail");
+
+    bar.style.width = pct.toFixed(1) + "%";
+    bar.classList.remove("warning", "danger");
+
+    let status = "";
+    if (pct > 90) { bar.classList.add("danger"); status = "Nearly full"; }
+    else if (pct > 70) { bar.classList.add("warning"); status = "Running low"; }
+
+    detail.innerHTML = `<span>${status} &middot; Used ${usedMB} / ${totalMB} MB</span>`;
+
+    return info;
+  } catch(e) { /* silent */ }
+  return null;
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / 1048576).toFixed(1) + " MB";
+}
+
+// ==================== Mode 1: Photo Album ====================
+
+// --- Upload via Preview Container ---
+(function initPreviewUpload() {
+  const container = document.getElementById("preview-container");
+  const floatingRemoveButton = getFloatingRemoveButton();
+  if (floatingRemoveButton) {
+    floatingRemoveButton.addEventListener("click", event => {
+      event.stopPropagation();
+      const layer = getSelectedImageLayer();
+      if (layer) removeImageLayer(layer.id);
+    });
+  }
+  if (!container) return;
+  container.addEventListener("click", e => {
+    const clickedLayer = e.target.closest(".preview-layer");
+    const clickedRemoveBtn = e.target.closest(".layer-remove-btn");
+    if (clickedLayer || clickedRemoveBtn || hasCompositionImages()) return;
+    document.getElementById("file-input").click();
+  });
+  container.addEventListener("dragover", e => { e.preventDefault(); container.style.borderColor = "#336699"; });
+  container.addEventListener("dragleave", () => { container.style.borderColor = ""; });
+  container.addEventListener("drop", e => {
+    e.preventDefault();
+    container.style.borderColor = "";
+    if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+  });
+})();
+
+function onFileSelected(e) {
+  if (e.target.files.length > 0) {
+    Array.from(e.target.files).forEach(handleFile);
+  }
+  e.target.value = "";
+}
+
+function handleFile(file) {
+  if (!file.type.startsWith("image/")) { showToast("Please select an image file", "error"); return; }
+  const reader = new FileReader();
+  reader.onload = function(ev) { showPreview(ev.target.result); };
+  reader.readAsDataURL(file);
+}
+
+function showPreview(src) {
+  const img = new Image();
+  img.onload = function() {
+    createPreviewLayer(src, img.naturalWidth, img.naturalHeight);
+  };
+  img.src = src;
+}
+
+// --- Touch Gestures ---
+(function initGestures() {
+  const container = document.getElementById("preview-container");
+  if (!container) return;
+  let touchStart = null;
+  let lastDist = 0;
+  let lastAngle = 0;
+  let dragging = false;
+  let gestureLayerId = null;
+
+  container.addEventListener("touchstart", e => {
+    if (!hasCompositionImages()) return;
+    if (e.touches.length === 1) {
+      const layerEl = e.target.closest(".preview-layer");
+      if (!layerEl) {
+        touchStart = null;
+        dragging = false;
+        gestureLayerId = null;
+        return;
+      }
+      const layerId = Number(layerEl.dataset.layerId);
+      selectImageLayer(layerId, true);
+      gestureLayerId = layerId;
+      touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      dragging = true;
+    } else if (e.touches.length === 2) {
+      const selectedLayer = getActiveImageLayer();
+      if (!selectedLayer) return;
+      gestureLayerId = selectedLayer.id;
+      dragging = false;
+      lastDist = getTouchDist(e.touches);
+      lastAngle = getTouchAngle(e.touches);
+    }
+  }, { passive: true });
+
+  container.addEventListener("touchmove", e => {
+    const layer = compositionImages.find(item => item.id === gestureLayerId) || getSelectedImageLayer();
+    if (!layer) return;
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const dist = getTouchDist(e.touches);
+      const angle = getTouchAngle(e.touches);
+      if (lastDist > 0) {
+        const ds = dist / lastDist;
+        layer.transform.scale = clamp(layer.transform.scale * ds, 0.1, PREVIEW_MAX_SCALE);
+        lastDist = dist;
+      }
+      layer.transform.rotation += (angle - lastAngle);
+      lastAngle = angle;
+      applyTransform(layer);
+    } else if (e.touches.length === 1 && touchStart && dragging) {
+      e.preventDefault();
+      const dx = e.touches[0].clientX - touchStart.x;
+      const dy = e.touches[0].clientY - touchStart.y;
+      touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      layer.transform.x += dx;
+      layer.transform.y += dy;
+      applyTransform(layer);
+    }
+  }, { passive: false });
+
+  container.addEventListener("touchend", () => {
+    dragging = false;
+    touchStart = null;
+    lastDist = 0;
+    lastAngle = 0;
+    gestureLayerId = null;
+  });
+})();
+
+function getTouchDist(touches) {
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+function getTouchAngle(touches) {
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.atan2(dy, dx) * 180 / Math.PI;
+}
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+// --- Mouse fallback ---
+(function initMouseGestures() {
+  const container = document.getElementById("preview-container");
+  if (!container) return;
+  let dragging = false;
+  let mx = 0;
+  let my = 0;
+  let dragLayerId = null;
+
+  container.addEventListener("mousedown", e => {
+    if (e.button !== 0) return;
+    const layerEl = e.target.closest(".preview-layer");
+    if (!layerEl) return;
+    const layerId = Number(layerEl.dataset.layerId);
+    selectImageLayer(layerId, true);
+    dragLayerId = layerId;
+    dragging = true;
+    mx = e.clientX;
+    my = e.clientY;
+    e.preventDefault();
+  });
+
+  window.addEventListener("mousemove", e => {
+    if (!dragging) return;
+    const layer = compositionImages.find(item => item.id === dragLayerId);
+    if (!layer) return;
+    const dx = e.clientX - mx;
+    const dy = e.clientY - my;
+    mx = e.clientX;
+    my = e.clientY;
+    layer.transform.x += dx;
+    layer.transform.y += dy;
+    applyTransform(layer);
+  });
+
+  window.addEventListener("mouseup", () => {
+    dragging = false;
+    dragLayerId = null;
+  });
+
+  container.addEventListener("wheel", e => {
+    const layer = getActiveImageLayer();
+    if (!layer) return;
+    e.preventDefault();
+    const ds = e.deltaY < 0 ? 1.08 : 0.92;
+    layer.transform.scale = clamp(layer.transform.scale * ds, 0.1, PREVIEW_MAX_SCALE);
+    applyTransform(layer);
+  }, { passive: false });
+
+  document.addEventListener("mousedown", e => {
+    const target = e.target;
+    if (
+      target.closest("#preview-container") ||
+      target.closest("#reupload-btn") ||
+      target.closest(".editor-controls") ||
+      target.closest(".upload-actions")
+    ) return;
+    clearSelectedImageLayer();
+  });
+})();
+
+// --- Editor Buttons ---
+function zoomIn() {
+  const layer = getActiveImageLayer();
+  if (!layer) return;
+  layer.transform.scale = clamp(layer.transform.scale * 1.15, 0.1, PREVIEW_MAX_SCALE);
+  applyTransform(layer);
+}
+function zoomOut() {
+  const layer = getActiveImageLayer();
+  if (!layer) return;
+  layer.transform.scale = clamp(layer.transform.scale * 0.87, 0.1, PREVIEW_MAX_SCALE);
+  applyTransform(layer);
+}
+function rotateLeft() {
+  const layer = getActiveImageLayer();
+  if (!layer) return;
+  layer.transform.rotation -= 90;
+  applyTransform(layer);
+}
+function rotateRight() {
+  const layer = getActiveImageLayer();
+  if (!layer) return;
+  layer.transform.rotation += 90;
+  applyTransform(layer);
+}
+function resetTransform() {
+  const layer = getActiveImageLayer();
+  if (!layer) return;
+  fitImageToContainer(layer, true);
+}
+
+function resetDisplayModeToDither() {
+  if (displayMode === "dither") return;
+  displayMode = "dither";
+  document.getElementById("display-mode-label").textContent = "Dither";
+  const opts = document.querySelectorAll("#display-mode-menu .display-mode-option");
+  opts.forEach(o => o.classList.toggle("selected", o.dataset.val === "dither"));
+}
+
+function toggleDisplayModeDropdown() {
+  const wrap = document.getElementById("display-mode-wrap");
+  const menu = document.getElementById("display-mode-menu");
+  const open = !menu.classList.contains("hidden");
+  menu.classList.toggle("hidden", open);
+  wrap.classList.toggle("open", !open);
+}
+
+function selectDisplayMode(val) {
+  displayMode = val;
+  document.getElementById("display-mode-label").textContent = val === "dither" ? "Dither" : "Nearest";
+  const opts = document.querySelectorAll("#display-mode-menu .display-mode-option");
+  opts.forEach(o => o.classList.toggle("selected", o.dataset.val === val));
+  document.getElementById("display-mode-menu").classList.add("hidden");
+  document.getElementById("display-mode-wrap").classList.remove("open");
+  schedulePreviewInkRender(true);
+}
+
+document.addEventListener("click", function(e) {
+  const wrap = document.getElementById("display-mode-wrap");
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById("display-mode-menu").classList.add("hidden");
+    wrap.classList.remove("open");
+  }
+});
+
+// --- Canvas Export ---
+function exportToCanvas() {
+  if (!hasCompositionImages()) return null;
+
+  const [cw, ch] = getCanvasSize();
+  const canvas = document.getElementById("export-canvas");
+  canvas.width = cw;
+  canvas.height = ch;
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, cw, ch);
+
+  const container = getPreviewContainer();
+  const containerWidth = container.clientWidth;
+  const containerHeight = container.clientHeight;
+  if (!containerWidth || !containerHeight) return null;
+
+  const scaleX = cw / containerWidth;
+  const scaleY = ch / containerHeight;
+
+  compositionImages.forEach(layer => {
+    if (!layer.imgEl || !layer.naturalWidth || !layer.naturalHeight) return;
+    const drawWidth = layer.baseWidth * scaleX;
+    const drawHeight = layer.baseHeight * scaleY;
+    const translatedX = layer.transform.x * scaleX;
+    const translatedY = layer.transform.y * scaleY;
+
+    ctx.save();
+    ctx.translate(cw / 2, ch / 2);
+    ctx.translate(translatedX, translatedY);
+    ctx.rotate(layer.transform.rotation * Math.PI / 180);
+    ctx.scale(layer.transform.scale, layer.transform.scale);
+    ctx.drawImage(layer.imgEl, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight);
+    ctx.restore();
+  });
+
+  return canvas;
+}
+
+function exportPreviewInkCanvas() {
+  const source = exportToCanvas();
+  if (!source) return null;
+  const [cw, ch] = getCanvasSize();
+  const canvas = document.createElement("canvas");
+  canvas.width = cw;
+  canvas.height = ch;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return null;
+  ctx.drawImage(source, 0, 0, cw, ch);
+  const imageData = ctx.getImageData(0, 0, cw, ch);
+  quantizeToEpdPalette(imageData);
+  ctx.putImageData(imageData, 0, 0);
+  return canvas;
+}
+
+async function uploadOnly() {
+  const canvas = exportToCanvas();
+  if (!canvas) { showToast("Please select an image first", "error"); return; }
+  try {
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob(b => { if (b) resolve(b); else reject(new Error("Export failed")); }, "image/png");
+    });
+    const storage = await loadStorage();
+    if (storage && storage.free < blob.size) {
+      showToast("Storage full, please delete some photos", "error");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("file", blob, "image_" + Date.now() + ".png");
+    formData.append("action", "upload_only");
+    formData.append("algorithm", displayMode);
+    showToast("Uploading...", "");
+    const resp = await apiCall("POST", "/api/photos/upload", formData, true);
+    showToast("Uploaded successfully", "success");
+    if (displayMode === "nearest" && resp && resp.name) {
+      // Nearest photo inserts at front — all page boundaries shift, clear page cache
+      photoPageCache = {};
+      const m = resp.name.match(/^imageN0*(\d+)/i);
+      if (m) photoPage = Math.ceil(Number(m[1]) / getPhotoPerPage());
+    } else {
+      photoPage = 9999;
+    }
+    await loadPhotoList(photoPage, /* forceRefresh */ true);
+    loadStorage();
+  } catch(e) { showToast(e.message, "error"); }
+}
+
+async function uploadWithDisplay() {
+  const canvas = exportToCanvas();
+  if (!canvas) { showToast("Please select an image first", "error"); return; }
+
+  try {
+    const blob = await new Promise((resolve, reject) => {
+      canvas.toBlob(b => { if (b) resolve(b); else reject(new Error("Export failed")); }, "image/png");
+    });
+
+    const storage = await loadStorage();
+    if (storage && storage.free < blob.size) {
+      showToast("Storage full, please delete some photos", "error");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", blob, "display_" + Date.now() + ".png");
+    formData.append("action", "upload_display");
+    formData.append("algorithm", displayMode);
+
+    showToast("Uploading...", "");
+    const resp = await apiCall("POST", "/api/photos/upload", formData, true);
+    showToast("Uploaded & display updated", "success");
+    // Compute which page the new photo landed on from its name
+    if (displayMode === "nearest" && resp && resp.name) {
+      // Nearest photo inserts at front — all pages shift, clear page cache
+      photoPageCache = {};
+      const m = resp.name.match(/^imageN0*(\d+)/i);
+      if (m) photoPage = Math.ceil(Number(m[1]) / getPhotoPerPage());
+    } else {
+      photoPage = 9999; // Dither appends at end, only last page changes
+    }
+    await loadPhotoList(photoPage, /* forceRefresh */ true);
+    loadStorage();
+  } catch(e) { showToast(e.message, "error"); }
+}
+
+// --- Photo List ---
+function getPhotoPerPage() {
+  const isDesktop = window.innerWidth >= 1200;
+  if (!isDesktop) return 16;
+  return 12;
+}
+
+async function loadPhotoList(page, forceRefresh = false) {
+  page = page || photoPage;
+  const perPage = getPhotoPerPage();
+
+  // Serve from cache if this page was loaded before
+  if (!forceRefresh && photoPageCache[page]) {
+    photoPage = page;
+    renderPhotoGridFromNames(photoPageCache[page]);
+    renderPagination();
+    return;
+  }
+
+  photoPageLoading = true;
+  try {
+    const data = await apiCall("GET", `/api/photos/list?page=${page}&per_page=${perPage}`);
+    if (data.page === page || page === photoPage) {
+      // Store per-photo data globally
+      const names = [];
+      data.photos.forEach(p => {
+        photoCache[p.name] = { name: p.name, url: p.url };
+        names.push(p.name);
+      });
+      photoPageCache[data.page] = names;
+      photoPage = data.page;
+      photoTotalPages = data.total_pages;
+      photoTotal = data.total;
+      renderPhotoGridFromNames(names);
+      renderPagination();
+    }
+  } catch(e) { /* silent */ }
+  photoPageLoading = false;
+}
+
+function goPhotoPage(page) {
+  if (page < 1 || page > photoTotalPages) return;
+  photoPage = page;
+  renderPagination();
+  loadPhotoList(page);
+}
+
+function renderPagination() {
+  const el = document.getElementById("photo-pagination");
+  const info = document.getElementById("pg-info");
+  const prev = document.getElementById("pg-prev");
+  const next = document.getElementById("pg-next");
+
+  if (photoTotalPages <= 1) {
+    el.style.display = "none";
+    return;
+  }
+  el.style.display = "flex";
+  info.textContent = `${photoPage} / ${photoTotalPages}`;
+  prev.disabled = photoPage <= 1;
+  next.disabled = photoPage >= photoTotalPages;
+}
+
+function renderPhotoGridFromNames(names) {
+  const grid = document.getElementById("photo-grid");
+  const count = document.getElementById("photo-count");
+  count.textContent = photoTotal > 0 ? `(${photoTotal})` : "";
+
+  if (names.length === 0) {
+    grid.innerHTML = `<div style="color:#999;font-size:14px;text-align:center;grid-column:1/-1;padding:20px;">No photos</div>`;
+    return;
+  }
+  grid.innerHTML = names.map(name => {
+    const p = photoCache[name] || { name, url: "" };
+    return `<div class="photo-card">
+      <img class="thumb" src="${escapeHtml(p.url)}" alt="${escapeHtml(p.name)}" loading="lazy">
+      <div class="photo-info"><div class="photo-name" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</div></div>
+      <div class="photo-actions">
+        <button class="btn btn-outline btn-sm" onclick="displayPhoto('${escapeAttr(p.name)}')">View</button>
+        <button class="btn btn-danger btn-sm" onclick="deletePhoto('${escapeAttr(p.name)}')">Del</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function escapeAttr(s) { return s.replace(/'/g, "\\'").replace(/"/g, "&quot;"); }
+
+async function displayPhoto(name) {
+  try {
+    showToast("Refreshing display...", "");
+    await apiCall("POST", "/api/photos/display", { name });
+    showToast("Refresh complete", "success");
+  } catch(e) { showToast(e.message, "error"); }
+}
+
+function deletePhoto(name) {
+  showConfirm(`Delete "${name}"?`, async () => {
+    try {
+      await apiCall("DELETE", "/api/photos/delete?name=" + encodeURIComponent(name));
+      showToast("Deleted", "success");
+      loadStorage();
+      // Remove only this photo from caches
+      delete photoCache[name];
+      photoTotal = Math.max(0, photoTotal - 1);
+      for (const key of Object.keys(photoPageCache)) {
+        photoPageCache[key] = photoPageCache[key].filter(n => n !== name);
+      }
+      // If the current page is now empty, step back
+      const names = photoPageCache[photoPage];
+      if (names && names.length === 0 && photoPage > 1) {
+        photoPage--;
+      } else if (!names && photoPage > 1) {
+        // Page not cached — check server whether it's now empty
+        const perPage = getPhotoPerPage();
+        const data = await apiCall("GET", `/api/photos/list?page=${photoPage}&per_page=${perPage}`);
+        if (data.photos.length === 0) { photoPage--; }
+      }
+      loadPhotoList(photoPage, /* forceRefresh */ true);
+    } catch(e) { showToast(e.message, "error"); }
+  });
+}
+
+// ==================== Battery ====================
+function batteryPercentFromMV(mv) {
+  // Lithium battery discharge curve: 4.2V=100%, 3.2V=0%
+  const v = mv / 1000.0;
+  if (v >= 4.2) return 100;
+  if (v <= 3.2) return 0;
+  if (v >= 4.0) return Math.round(85 + (v - 4.0) / 0.2 * 15);
+  if (v >= 3.8) return Math.round(50 + (v - 3.8) / 0.2 * 35);
+  if (v >= 3.6) return Math.round(15 + (v - 3.6) / 0.2 * 35);
+  if (v >= 3.4) return Math.round(5 + (v - 3.4) / 0.2 * 10);
+  return Math.round((v - 3.2) / 0.2 * 5);
+}
+
+async function updateBattery() {
+  try {
+    const data = await apiCall("GET", "/api/battery");
+    const pct = batteryPercentFromMV(data.voltage_mv);
+    const fill = document.getElementById("battery-fill");
+    const text = document.getElementById("battery-percent");
+
+    fill.style.width = pct + "%";
+    fill.classList.remove("low", "crit");
+    if (pct <= 10) fill.classList.add("crit");
+    else if (pct <= 25) fill.classList.add("low");
+
+    text.textContent = pct + "%";
+  } catch(e) {}
+}
+
+// ==================== Initialization ====================
+async function init() {
+  bindDeviceNameInput("device-name-input");
+  await Promise.all([loadWifiModes(), loadSetupConfig()]);
+  updateBattery();
+
+  // Keep first-run clients on Wi-Fi setup until the device has joined the LAN.
+  // Mode readiness alone is not enough: the local album is usable over the
+  // onboarding AP, but entering it here would hide the credential form.
+  try {
+    const [ready, status] = await Promise.all([fetchDeviceReady(), refreshStatusBar()]);
+    if (status) updateStatusBar(status);
+
+    if (!ready || !ready.mode || ready.mode.current !== "mode_1") {
+      try { await apiCall("POST", "/api/mode/switch", { mode: "mode_1" }); } catch(e) {}
+    }
+    if (ready && ready.ui && ready.ui.requires_wifi_setup) {
+      switchPage("wifi-page");
+      requestAnimationFrame(() => scanNetworks());
+      return;
+    }
+    enterReadyMode("mode_1");
+    loadStorage();
+    requestAnimationFrame(applyModeConfig);
+  } catch(e) {
+    // Server unreachable: still show mode_1 UI so the user can see the layout;
+    // calls will fail and toast errors will surface if they try to act.
+    enterReadyMode("mode_1");
+    showToast("Cannot reach device server", "error");
+  }
+}
+
+window.addEventListener("resize", applyModeConfig);
+
+init();
+// Battery polling every 60 seconds
+setInterval(updateBattery, 60000);
+</script>
+
+</body>
+</html>

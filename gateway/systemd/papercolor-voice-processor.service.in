@@ -1,0 +1,37 @@
+[Unit]
+Description=PaperColor local voice transcription worker
+After=network-online.target papercolor-gateway.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@SERVICE_USER@
+Group=@SERVICE_USER@
+Environment=HF_HOME=/var/lib/papercolor-gateway/models
+Environment=HF_HUB_DISABLE_XET=1
+Environment=PYTHONUNBUFFERED=1
+ExecStart=@INSTALL_DIR@/.venv/bin/papercolor-process-voice --data-dir /var/lib/papercolor-gateway --model small --watch
+Restart=on-failure
+RestartSec=10s
+UMask=0027
+
+StateDirectory=papercolor-gateway
+StateDirectoryMode=0750
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

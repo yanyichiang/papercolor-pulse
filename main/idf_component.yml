@@ -1,0 +1,6 @@
+## IDF Component Manager Manifest File
+dependencies:
+  espressif/esp_tinyusb: ^2.1.1
+  m5stack/m5pm1: ^1.0.6
+  espressif/qrcode: ^0.2.0
+  espressif/mdns: ^1.11.1

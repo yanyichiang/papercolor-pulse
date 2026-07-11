@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "papercolor-pulse",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-01",
+  "workers_dev": true,
+  "vars": {
+    "ORIGIN_MCP_URL": "https://papercolor-origin.example.com/mcp"
+  }
+}

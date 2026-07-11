@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-11T01:17:00+08:00",
+  "now": {
+    "temperature_c": {"value": 28.5, "observed_at": "2026-07-11T01:16:42+08:00"},
+    "humidity_pct": {"value": 62, "observed_at": "2026-07-11T01:16:42+08:00"},
+    "weather": {"condition": "多云", "low_c": 24, "high_c": 31, "observed_at": "2026-07-11T01:10:00+08:00"},
+    "assistant_note": "下午可能有阵雨，出门记得带伞。室内有点热，先开一会儿窗吧。",
+    "focus": {"title": "PaperColor Pulse V1", "summary": "先完成桌面 Pulse，再接灵感录音", "progress_pct": 72, "observed_at": "2026-07-11T01:15:00+08:00"},
+    "latest_result": {"text": "三键映射与立即同步实机验收", "verified_at": "2026-07-11T00:58:00+08:00"}
+  },
+  "work": {
+    "quota_usage": {"five_hour_pct": 63, "weekly_pct": 41, "observed_at": "2026-07-11T01:15:00+08:00"},
+    "sessions": [
+      {"title": "PaperColor Pulse", "priority": "P1", "status": "正在定义页面协议"},
+      {"title": "Home Assistant", "priority": "P1", "status": "home-first 改造"},
+      {"title": "StackChan", "priority": "P2", "status": "Agent 表达与陪伴"}
+    ]
+  },
+  "ideas": {
+    "items": [
+      {"title": "让三台设备共享同一个 Pulse", "state": "已整理", "captured_at": "2026-07-11T00:48:00+08:00"},
+      {"title": "墨水屏不是审批器，而是 Agent 日记页", "state": "已归档", "captured_at": "2026-07-10T23:56:00+08:00"},
+      {"title": "顶部 C 长按录音，松手即保存", "state": "待实现", "captured_at": "2026-07-11T01:12:00+08:00"}
+    ],
+    "sd_state": "ready"
+  }
+}

@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  gateway:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --extra test --locked
+        working-directory: gateway
+      - run: uv run pytest
+        working-directory: gateway
+
+  cloudflare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: cloudflare/package-lock.json
+      - run: npm ci
+        working-directory: cloudflare
+      - run: npm test
+        working-directory: cloudflare
+      - run: npm run typecheck
+        working-directory: cloudflare
+      - run: npx wrangler deploy --dry-run --config wrangler.example.jsonc
+        working-directory: cloudflare
+
+  privacy-and-host-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - run: sudo apt-get update && sudo apt-get install -y ripgrep g++
+      - run: ./tools/public-privacy-scan.sh
+      - run: python3 tests/test_provision_wifi.py
+      - name: Run host policy tests
+        run: |
+          for test in tests/*_test.cpp; do
+            out="/tmp/$(basename "$test" .cpp)"
+            g++ -std=c++17 -I. "$test" -o "$out"
+            "$out"
+          done

@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "papercolor-gateway"
+version = "0.1.0"
+description = "Self-hosted gateway for PaperColor Pulse displays"
+requires-python = ">=3.12"
+dependencies = [
+  "aiohttp>=3.10,<4",
+  "Pillow>=10.4,<12",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<9"]
+voice = ["faster-whisper>=1.1,<2"]
+
+[project.scripts]
+papercolor-gateway = "papercolor_gateway.__main__:main"
+papercolor-process-voice = "papercolor_gateway.voice_processor:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]

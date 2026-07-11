@@ -1,0 +1,71 @@
+# PaperColor Pulse factual weather publisher.
+# The bearer value is stored only in Home Assistant secrets.yaml.
+
+rest_command:
+  papercolor_publish_weather:
+    url: !secret papercolor_gateway_ha_source_url
+    method: PUT
+    headers:
+      authorization: !secret papercolor_gateway_admin_authorization
+      content-type: application/json
+    payload: "{{ payload }}"
+    timeout: 10
+
+automation:
+  - id: papercolor_publish_weather_facts
+    alias: PaperColor Publish Weather Facts
+    description: Publish verified daily forecast facts without a model call.
+    mode: single
+    trigger:
+      - platform: homeassistant
+        event: start
+      - platform: time_pattern
+        minutes: "/15"
+    action:
+      - service: weather.get_forecasts
+        target:
+          entity_id: weather.home
+        data:
+          type: daily
+        response_variable: papercolor_daily_forecast
+      - variables:
+          forecast_rows: >-
+            {{ papercolor_daily_forecast
+               .get('weather.home', {})
+               .get('forecast', []) }}
+          today: "{{ forecast_rows[0] if forecast_rows | count > 0 else dict() }}"
+          raw_condition: "{{ states('weather.home') }}"
+          condition_labels:
+            clear-night: 晴夜
+            cloudy: 多云
+            exceptional: 异常天气
+            fog: 雾
+            hail: 冰雹
+            lightning: 雷电
+            lightning-rainy: 雷雨
+            partlycloudy: 晴间多云
+            pouring: 暴雨
+            rainy: 雨
+            snowy: 雪
+            snowy-rainy: 雨夹雪
+            sunny: 晴
+            windy: 有风
+            windy-variant: 强风
+          condition_label: >-
+            {{ condition_labels.get(raw_condition, raw_condition) }}
+      - condition: template
+        value_template: >-
+          {{ raw_condition not in ['unknown', 'unavailable', 'none', '']
+             and today.get('templow') is number
+             and today.get('temperature') is number }}
+      - service: rest_command.papercolor_publish_weather
+        data:
+          payload: >-
+            {{ {
+              'observed_at': utcnow().isoformat(),
+              'weather': {
+                'condition': condition_label,
+                'low_c': today.get('templow') | float,
+                'high_c': today.get('temperature') | float
+              }
+            } | to_json }}
