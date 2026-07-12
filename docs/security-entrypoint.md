@@ -1,1 +1,0 @@
-See [`SECURITY.md`](../SECURITY.md).
