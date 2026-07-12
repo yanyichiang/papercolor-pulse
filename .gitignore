@@ -72,12 +72,35 @@ Desktop.ini
 
 # User-specific configuration files
 *.user
-*.workspace # General workspace files, can be from various tools
-*.suo       # Visual Studio Solution User Options
-*.sln.docstates # Visual Studio
+*.workspace # General workspace files
+*.suo
+*.sln.docstates
 
 # Visual Studio Code
 .vscode/
 .cache/
 .superpowers/
 .worktrees/
+
+# Secrets and local deployment state
+.env
+.env.*
+!.env.example
+!*.example.env
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.mobileprovision
+secrets.yaml
+secrets.yml
+.dev.vars
+.dev.vars.*
+wrangler.jsonc
+wrangler.toml
+credentials.json
+service-account*.json
+*.nvs.bin
+wifi.csv
