@@ -1,0 +1,1 @@
+This branch hardens secret handling across source, firmware builds, CI, and operational documentation. See [`SECURITY.md`](../SECURITY.md) for the policy and [`secret-rotation.md`](secret-rotation.md) for incident response.
