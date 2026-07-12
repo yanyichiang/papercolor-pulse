@@ -38,10 +38,11 @@ idf_component_register(
 
 )
 
+# Never inject authentication material through compiler definitions. Values in
+# compiler command lines, build logs, ELF files, and firmware images are not
+# secret storage. Machine-only diagnostics remain fail-closed unless a future
+# runtime credential source is explicitly implemented.
 target_compile_definitions(${COMPONENT_LIB} PRIVATE APP_ASSETS_USE_EMBEDDED=${APP_ASSETS_USE_EMBEDDED})
-if(DEFINED ENV{PAPERCOLOR_API_TOKEN})
-    target_compile_definitions(${COMPONENT_LIB} PRIVATE PAPERCOLOR_API_TOKEN="$ENV{PAPERCOLOR_API_TOKEN}")
-endif()
 target_add_binary_data(${COMPONENT_LIB} "apps/app_server/index.html" TEXT)
 target_add_binary_data(${COMPONENT_LIB} "assets/PaperColor.png" BINARY)
 target_add_binary_data(${COMPONENT_LIB} "assets/arrowClickToPowerOn.png" BINARY)
