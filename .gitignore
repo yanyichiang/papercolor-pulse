@@ -32,12 +32,9 @@ sdkconfig.old
 sdkconfig
 
 # ESP-IDF dependencies
-# For older versions or manual component management
 /components/.idf/
 **/components/.idf/
-# For modern ESP-IDF component manager
 managed_components/
-# If ESP-IDF tools are installed/referenced locally to the project
 .espressif/
 
 # CMake generated files
@@ -72,12 +69,36 @@ Desktop.ini
 
 # User-specific configuration files
 *.user
-*.workspace # General workspace files, can be from various tools
-*.suo       # Visual Studio Solution User Options
-*.sln.docstates # Visual Studio
+*.workspace
+*.suo
+*.sln.docstates
 
 # Visual Studio Code
 .vscode/
 .cache/
 .superpowers/
 .worktrees/
+
+# Secrets and local deployment state
+.env
+.env.*
+!.env.example
+!*.example.env
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.mobileprovision
+secrets.yaml
+secrets.yml
+.dev.vars
+.dev.vars.*
+wrangler.jsonc
+wrangler.toml
+credentials.json
+service-account*.json
+.privacy-patterns.local
+*.nvs.bin
+wifi.csv

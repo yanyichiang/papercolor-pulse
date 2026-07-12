@@ -1,0 +1,8 @@
+# Copy this file to .privacy-patterns.local and add private indicators below.
+# Use one ripgrep-compatible extended regular expression per line.
+# Never commit the local file.
+
+# Example patterns:
+# 192\.168\.1\.123
+# my-private-hostname
+# aa:bb:cc

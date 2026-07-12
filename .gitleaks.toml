@@ -1,0 +1,21 @@
+title = "PaperColor Pulse secret scanning"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known non-secret examples and generated dependency metadata"
+paths = [
+  '''gateway/config/example\.env$''',
+  '''cloudflare/wrangler\.example\.jsonc$''',
+  '''cloudflare/test/.*''',
+  '''package-lock\.json$''',
+  '''uv\.lock$'''
+]
+regexes = [
+  '''YOUR_[A-Z0-9_]+''',
+  '''example\.com''',
+  '''client-secret-value''',
+  '''origin-admin-secret''',
+  '''access-client-(id|secret)'''
+]
